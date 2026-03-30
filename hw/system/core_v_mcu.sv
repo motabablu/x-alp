@@ -264,9 +264,9 @@ module core_v_mcu (
         .reg_req_i  (reg_req_sig[POWER_MANAGER_REG_IDX]),
         .reg_rsp_o  (reg_rsp_sig[POWER_MANAGER_REG_IDX]),
         // Status & Interrupts
-        .core_sleep_i (1'b0), // Tie to 0 for now (or connect to CPU sleep signal if available)
-        .intr_i       ('0),   // Tie off for now
-        .ext_irq_i    ('0),   // Tie off for now
+        .core_sleep_i (1'b0), // CONNECT TO CPU SLEEP SIGNAL
+        .intr_i       ('0),   // CONNECT
+        .ext_irq_i    ('0),   // CONNECT
         // Power Control Routing
         .cpu_subsystem_pwr_ctrl_o        (cpu_subsystem_pwr_ctrl),
         .peripheral_subsystem_pwr_ctrl_o (peripheral_subsystem_pwr_ctrl),
