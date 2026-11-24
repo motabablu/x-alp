@@ -47,6 +47,33 @@ extern char __base_spm;
 extern char __base_dram;
 #endif // __ASSEMBLER__
 
+// PLIC interrupt sources (IDs)
+<%
+    interrupts = xalp.get_interrupts()
+%>\
+#define QTY_INTR 64
+% for name, id in (interrupts.get_interrupts().items() if interrupts else []):
+#define ${name.upper()} ${id}
+% endfor
+
+// Power manager: harts, power domains and clock gate groups
+<%
+    pm = xalp.get_power_manager()
+%>\
+#define NUM_CORES ${max(pm.num_cores(), 1) if pm else 1}
+% for i, pd in enumerate(pm.get_power_domains() if pm else []):
+#define PD_${pd.name.upper()} ${i}
+% endfor
+#define NUM_PD ${len(pm.get_power_domains()) if pm else 0}
+% if pm and pm.get_power_domains():
+// Lets the driver check its view of the register layout
+#define PM_FIRST_PD_MODE_REG_OFFSET POWER_MANAGER_PD_${pm.get_power_domains()[0].name.upper()}_MODE_REG_OFFSET
+% endif
+% for i, cg in enumerate(pm.get_clock_gates() if pm else []):
+#define CG_${cg.upper()} ${i}
+% endfor
+#define NUM_CG ${len(pm.get_clock_gates()) if pm else 0}
+
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus

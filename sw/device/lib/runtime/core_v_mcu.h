@@ -55,17 +55,27 @@ extern "C" {
 #define EXT_PERIPHERAL_SIZE 0x0000000000010000
 #define EXT_PERIPHERAL_END_ADDRESS (EXT_PERIPHERAL_BASE_ADDRESS + EXT_PERIPHERAL_SIZE)
 
-#define FAST_INTR_CTRL_BASE_ADDRESS 0x0000000020030000
-#define FAST_INTR_CTRL_START_ADDRESS FAST_INTR_CTRL_BASE_ADDRESS
-#define FAST_INTR_CTRL_SIZE 0x0000000000010000
-#define FAST_INTR_CTRL_END_ADDRESS (FAST_INTR_CTRL_BASE_ADDRESS + FAST_INTR_CTRL_SIZE)
-
-#define UART_BASE_ADDRESS 0x0000000020040000
+#define UART_BASE_ADDRESS 0x0000000020030000
 #define UART_START_ADDRESS UART_BASE_ADDRESS
 #define UART_SIZE 0x0000000000010000
 #define UART_END_ADDRESS (UART_BASE_ADDRESS + UART_SIZE)
 
-#define AXI_LLC_BASE_ADDRESS 0x0000000020050000
+#define RV_PLIC_BASE_ADDRESS 0x0000000020040000
+#define RV_PLIC_START_ADDRESS RV_PLIC_BASE_ADDRESS
+#define RV_PLIC_SIZE 0x0000000000010000
+#define RV_PLIC_END_ADDRESS (RV_PLIC_BASE_ADDRESS + RV_PLIC_SIZE)
+
+#define RV_TIMER_BASE_ADDRESS 0x0000000020050000
+#define RV_TIMER_START_ADDRESS RV_TIMER_BASE_ADDRESS
+#define RV_TIMER_SIZE 0x0000000000010000
+#define RV_TIMER_END_ADDRESS (RV_TIMER_BASE_ADDRESS + RV_TIMER_SIZE)
+
+#define POWER_MANAGER_BASE_ADDRESS 0x0000000020060000
+#define POWER_MANAGER_START_ADDRESS POWER_MANAGER_BASE_ADDRESS
+#define POWER_MANAGER_SIZE 0x0000000000010000
+#define POWER_MANAGER_END_ADDRESS (POWER_MANAGER_BASE_ADDRESS + POWER_MANAGER_SIZE)
+
+#define AXI_LLC_BASE_ADDRESS 0x0000000020070000
 #define AXI_LLC_START_ADDRESS AXI_LLC_BASE_ADDRESS
 #define AXI_LLC_SIZE 0x0000000000010000
 #define AXI_LLC_END_ADDRESS (AXI_LLC_BASE_ADDRESS + AXI_LLC_SIZE)
@@ -79,12 +89,92 @@ extern char __base_ext_slaves;
 extern char __base_soc_ctrl;
 extern char __base_bootrom;
 extern char __base_ext_peripheral;
-extern char __base_fast_intr_ctrl;
 extern char __base_uart;
+extern char __base_rv_plic;
+extern char __base_rv_timer;
+extern char __base_power_manager;
 extern char __base_axi_llc;
 extern char __base_spm;
 extern char __base_dram;
 #endif // __ASSEMBLER__
+
+// PLIC interrupt sources (IDs)
+#define QTY_INTR 64
+#define NULL_INTR 0
+#define UART_INTR_TX_WATERMARK 1
+#define UART_INTR_RX_WATERMARK 2
+#define UART_INTR_TX_EMPTY 3
+#define UART_INTR_RX_OVERFLOW 4
+#define UART_INTR_RX_FRAME_ERR 5
+#define UART_INTR_RX_BREAK_ERR 6
+#define UART_INTR_RX_TIMEOUT 7
+#define UART_INTR_RX_PARITY_ERR 8
+#define POWER_MANAGER_WAKEUP_TIMER 9
+#define EXT_INTR_0 10
+#define EXT_INTR_1 11
+#define EXT_INTR_2 12
+#define EXT_INTR_3 13
+#define EXT_INTR_4 14
+#define EXT_INTR_5 15
+#define EXT_INTR_6 16
+#define EXT_INTR_7 17
+#define EXT_INTR_8 18
+#define EXT_INTR_9 19
+#define EXT_INTR_10 20
+#define EXT_INTR_11 21
+#define EXT_INTR_12 22
+#define EXT_INTR_13 23
+#define EXT_INTR_14 24
+#define EXT_INTR_15 25
+#define EXT_INTR_16 26
+#define EXT_INTR_17 27
+#define EXT_INTR_18 28
+#define EXT_INTR_19 29
+#define EXT_INTR_20 30
+#define EXT_INTR_21 31
+#define EXT_INTR_22 32
+#define EXT_INTR_23 33
+#define EXT_INTR_24 34
+#define EXT_INTR_25 35
+#define EXT_INTR_26 36
+#define EXT_INTR_27 37
+#define EXT_INTR_28 38
+#define EXT_INTR_29 39
+#define EXT_INTR_30 40
+#define EXT_INTR_31 41
+#define EXT_INTR_32 42
+#define EXT_INTR_33 43
+#define EXT_INTR_34 44
+#define EXT_INTR_35 45
+#define EXT_INTR_36 46
+#define EXT_INTR_37 47
+#define EXT_INTR_38 48
+#define EXT_INTR_39 49
+#define EXT_INTR_40 50
+#define EXT_INTR_41 51
+#define EXT_INTR_42 52
+#define EXT_INTR_43 53
+#define EXT_INTR_44 54
+#define EXT_INTR_45 55
+#define EXT_INTR_46 56
+#define EXT_INTR_47 57
+#define EXT_INTR_48 58
+#define EXT_INTR_49 59
+#define EXT_INTR_50 60
+#define EXT_INTR_51 61
+#define EXT_INTR_52 62
+#define EXT_INTR_53 63
+
+// Power manager: harts, power domains and clock gate groups
+#define NUM_CORES 1
+#define PD_CPU 0
+#define PD_LLC 1
+#define PD_EXTERNAL_0 2
+#define NUM_PD 3
+// Lets the driver check its view of the register layout
+#define PM_FIRST_PD_MODE_REG_OFFSET POWER_MANAGER_PD_CPU_MODE_REG_OFFSET
+#define CG_UART 0
+#define NUM_CG 1
 
 #ifdef __cplusplus
 } // extern "C"

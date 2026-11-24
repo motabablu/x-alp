@@ -13,6 +13,10 @@ SECTIONS {
 
   .text : {
     *(.text._start)
+    /* Vectored mtvec: CVA6 needs the table 256-byte aligned */
+    . = ALIGN(256);
+    PROVIDE(__vector_start = .);
+    KEEP(*(.vectors))
     *(.text)
     *(.text.*)
   } > dram

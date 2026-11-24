@@ -15,6 +15,10 @@ SECTIONS {
   /* Put all LOAD sections in one contiguous output section */
   .misc : {
     *(.text._start)
+    /* Vectored mtvec: CVA6 needs the table 256-byte aligned */
+    . = ALIGN(256);
+    PROVIDE(__vector_start = .);
+    KEEP(*(.vectors))
     *(.text)
     *(.text.*)
     *(.rodata)
