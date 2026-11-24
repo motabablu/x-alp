@@ -12,12 +12,12 @@ module clock_gate_wrapper (
     output logic clk_o
 );
 
-  xilinx_clk_gating u_clk_gate (
-      .clk_i,
-      .en_i,
-      .test_en_i,
-      .clk_o
-  );
+    xilinx_clk_gating u_clk_gate (
+        .clk_i,
+        .en_i,
+        .test_en_i,
+        .clk_o
+    );
 
 endmodule
 
@@ -31,7 +31,7 @@ module power_switch_wrapper #(
     output logic pwr_ok_o
 );
 
-  assign switch_ack_no = switch_en_ni;
-  assign pwr_ok_o      = 1'b1;
+    assign switch_ack_no = switch_en_ni;
+    assign pwr_ok_o      = 1'b1;
 
 endmodule
