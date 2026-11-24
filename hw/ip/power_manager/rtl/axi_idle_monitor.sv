@@ -1,10 +1,8 @@
 // Copyright 2026 Politecnico di Torino
 // Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-//
-// Tells when an AXI port has no transaction in flight. A core in WFI can
-// still finish fetches: the power manager sees it asleep only once its port
-// is idle, so domains following the core do not stop under its feet.
+
+// Checks that an AXI interface is idle, i.e. no transactions are in flight and no new transactions are being requested.
 
 module axi_idle_monitor #(
     parameter type         req_t    = logic,
