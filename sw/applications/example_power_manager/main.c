@@ -2,13 +2,12 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
-// Power manager example, subsystem by subsystem (as in X-HEEP), with the CPU
-// and power manager SDKs. Needs the default configs/soc.py: power domains
-// cpu, llc (follows_cpu) and external_0, clock gate on the uart, PLIC with
-// the UART and the power manager wake-up timer.
+// Power manager example, subsystem by subsystem (as in X-HEEP), with the
+// power manager SDK. The core itself sleeps in example_cpu_sdk. Needs the
+// default configs/soc.py: power domains cpu, llc (follows_cpu) and
+// external_0, clock gate on the uart, power manager wake-up timer on the PLIC.
 //
-//   CPU         clock gated, then switched off and restored, for N cycles
-//   Peripherals UART clock gating, UART interrupt through the PLIC
+//   Peripherals UART clock gating
 //   Memory      LLC clock gated and retentive together with the CPU, and
 //               switched off after a flush when the program runs from DRAM
 //   External    external power domain switched off and on
@@ -24,10 +23,8 @@
 #include "axi_llc_regs.h"
 #include "core_v_mcu.h"
 #include "cpu_sdk.h"
-#include "handler.h"
 #include "power_manager_sdk.h"
 #include "printf.h"
-#include "rv_plic.h"
 #include "uart_regs.h"
 #include "x-alp.h"
 
@@ -45,18 +42,6 @@
 #define SLEEP_CYCLES 2000
 
 #define REG32(addr) (*(volatile uint32_t *)(addr))
-
-static volatile uint32_t g_irq_id;
-
-void handler_irq_external(void) {
-  uint32_t id = plic_claim();
-  if (id == UART_INTR_TX_EMPTY) {
-    REG32(UART_BASE_ADDRESS + UART_INTR_ENABLE_REG_OFFSET) = 0;
-    REG32(UART_BASE_ADDRESS + UART_INTR_STATE_REG_OFFSET) = 1u << UART_INTR_STATE_TX_EMPTY_BIT;
-  }
-  g_irq_id = id;
-  plic_complete(id);
-}
 
 static bool check(bool ok, const char *what) {
   PRINTF("%s: %s\n", what, ok ? "OK" : "FAIL");
@@ -84,12 +69,6 @@ int main(void) {
   bool ok = true;
   volatile uint32_t canary = 0xC0FFEE;
 
-  // ------------ CPU SUBSYSTEM ------------
-  PRINTF("Testing CPU subsystem...\n");
-
-  ok &= check(clock_gated_nap(), "cpu clock gating");
-  ok &= check(cpu_sleep_cycles(kPmModeOff, SLEEP_CYCLES) == 1 && canary == 0xC0FFEE, "cpu power gating and restore");
-
   // ------------ PERIPHERALS ------------
   PRINTF("Testing peripherals...\n");
 
@@ -99,18 +78,6 @@ int main(void) {
   for (volatile int i = 0; i < 100; i++) {}
   pm_uart_clock_gate(false);
   ok &= check(true, "uart clock gating");
-
-  // UART interrupt through the PLIC, forced with INTR_TEST
-  plic_set_threshold(0);
-  plic_irq_set_enabled(UART_INTR_TX_EMPTY, true, 1);
-  cpu_irq_enable(CPU_IRQ_EXT);
-  cpu_irq_global_enable();
-  REG32(UART_BASE_ADDRESS + UART_INTR_ENABLE_REG_OFFSET) = 1u << UART_INTR_STATE_TX_EMPTY_BIT;
-  REG32(UART_BASE_ADDRESS + UART_INTR_TEST_REG_OFFSET) = 1u << UART_INTR_STATE_TX_EMPTY_BIT;
-  for (volatile int i = 0; i < 1000 && !g_irq_id; i++) {}
-  cpu_irq_global_disable();
-  plic_irq_set_enabled(UART_INTR_TX_EMPTY, false, 0);
-  ok &= check(g_irq_id == UART_INTR_TX_EMPTY, "uart interrupt via plic");
 
   // ------------ MEMORY SUBSYSTEM (LLC) ------------
   PRINTF("Testing memory subsystem...\n");
