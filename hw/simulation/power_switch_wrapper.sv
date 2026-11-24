@@ -19,14 +19,14 @@ module power_switch_wrapper #(
     output logic pwr_ok_o        // 0: hold the block in reset
 );
 
-  logic [AckDelay-1:0] switch_q;
+    logic [AckDelay-1:0] switch_q;
 
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) switch_q <= '1;
-    else switch_q <= {switch_q[AckDelay-2:0], switch_en_ni};
-  end
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) switch_q <= '1;
+        else switch_q <= {switch_q[AckDelay-2:0], switch_en_ni};
+    end
 
-  assign switch_ack_no = switch_q[AckDelay-1];
-  assign pwr_ok_o      = switch_en_ni & switch_ack_no;
+    assign switch_ack_no = switch_q[AckDelay-1];
+    assign pwr_ok_o      = switch_en_ni & switch_ack_no;
 
 endmodule

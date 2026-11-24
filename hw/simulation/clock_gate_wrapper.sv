@@ -12,12 +12,12 @@ module clock_gate_wrapper (
     output logic clk_o
 );
 
-  logic en_latch;
+    logic en_latch;
 
-  always_latch begin
-    if (!clk_i) en_latch = en_i | test_en_i;
-  end
+    always_latch begin
+        if (!clk_i) en_latch = en_i | test_en_i;
+    end
 
-  assign clk_o = clk_i & en_latch;
+    assign clk_o = clk_i & en_latch;
 
 endmodule
