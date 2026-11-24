@@ -7,7 +7,7 @@
 #include "core_v_mcu.h"
 #include "power_manager_regs.h"
 
-#ifdef POWER_MANAGER_BASE_ADDRESS  // only when the power manager is configured
+#ifdef POWER_MANAGER_BASE_ADDRESS // only when the power manager is configured
 
 #define PM_REG(offset) (*(volatile uint32_t *)(POWER_MANAGER_BASE_ADDRESS + (offset)))
 
@@ -33,35 +33,49 @@ uint64_t pm_cpu_ctx[NUM_CORES][PM_CTX_WORDS];
 int pm_cpu_save_and_wfi(uint64_t *ctx, volatile uint32_t *sleep_en);
 void pm_cpu_restore(void);
 
-void pm_pd_set_mode(uint32_t pd, pm_mode_t mode) { PD_REG(pd, kPdMode) = mode; }
+void pm_pd_set_mode(uint32_t pd, pm_mode_t mode) {
+  PD_REG(pd, kPdMode) = mode;
+}
 
-void pm_pd_set_wfi_mask(uint32_t pd, uint32_t cores) { PD_REG(pd, kPdWfiMask) = cores; }
+void pm_pd_set_wfi_mask(uint32_t pd, uint32_t cores) {
+  PD_REG(pd, kPdWfiMask) = cores;
+}
 
 void pm_pd_set_wake_mask(uint32_t pd, uint64_t intr_mask, bool timer) {
-  PD_REG(pd, kPdWakeLo)    = (uint32_t)intr_mask;
-  PD_REG(pd, kPdWakeHi)    = (uint32_t)(intr_mask >> 32);
+  PD_REG(pd, kPdWakeLo) = (uint32_t)intr_mask;
+  PD_REG(pd, kPdWakeHi) = (uint32_t)(intr_mask >> 32);
   PD_REG(pd, kPdWakeTimer) = timer;
 }
 
-void pm_pd_set_delay(uint32_t pd, uint16_t cycles) { PD_REG(pd, kPdDelay) = cycles; }
-
-void pm_pd_sleep(uint32_t pd) { PD_REG(pd, kPdSleepEn) = 1; }
-
-void pm_pd_wake(uint32_t pd) { PD_REG(pd, kPdSleepEn) = 0; }
-
-bool pm_pd_is_sleeping(uint32_t pd) {
-  return PD_REG(pd, kPdStatus) & 1u;  // STATUS.SLEEPING
+void pm_pd_set_delay(uint32_t pd, uint16_t cycles) {
+  PD_REG(pd, kPdDelay) = cycles;
 }
 
-void pm_cg_set(uint32_t cg, bool gated) { CG_REG(cg) = gated; }
+void pm_pd_sleep(uint32_t pd) {
+  PD_REG(pd, kPdSleepEn) = 1;
+}
+
+void pm_pd_wake(uint32_t pd) {
+  PD_REG(pd, kPdSleepEn) = 0;
+}
+
+bool pm_pd_is_sleeping(uint32_t pd) {
+  return PD_REG(pd, kPdStatus) & 1u; // STATUS.SLEEPING
+}
+
+void pm_cg_set(uint32_t cg, bool gated) {
+  CG_REG(cg) = gated;
+}
 
 void pm_wakeup_timer_start(uint32_t cycles) {
   PM_REG(POWER_MANAGER_WAKEUP_TIMER_EN_REG_OFFSET) = 0;
-  PM_REG(POWER_MANAGER_WAKEUP_TIMER_REG_OFFSET)    = cycles;
+  PM_REG(POWER_MANAGER_WAKEUP_TIMER_REG_OFFSET) = cycles;
   PM_REG(POWER_MANAGER_WAKEUP_TIMER_EN_REG_OFFSET) = 1;
 }
 
-void pm_wakeup_timer_stop(void) { PM_REG(POWER_MANAGER_WAKEUP_TIMER_EN_REG_OFFSET) = 0; }
+void pm_wakeup_timer_stop(void) {
+  PM_REG(POWER_MANAGER_WAKEUP_TIMER_EN_REG_OFFSET) = 0;
+}
 
 int pm_cpu_sleep(uint32_t pd, pm_mode_t mode) {
   uint64_t hart;
@@ -85,10 +99,10 @@ int pm_cpu_sleep(uint32_t pd, pm_mode_t mode) {
   }
 #endif
 
-  uintptr_t restore                = (uintptr_t)&pm_cpu_restore;
+  uintptr_t restore = (uintptr_t)&pm_cpu_restore;
   HART_REG(hart, RESTORE_ADDR_LO) = (uint32_t)restore;
   HART_REG(hart, RESTORE_ADDR_HI) = (uint32_t)(restore >> 32);
-  HART_REG(hart, WAKEUP_STATE)    = 1;
+  HART_REG(hart, WAKEUP_STATE) = 1;
 
   int restored = pm_cpu_save_and_wfi(pm_cpu_ctx[hart], &PD_REG(pd, kPdSleepEn));
 

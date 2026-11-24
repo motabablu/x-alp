@@ -26,9 +26,9 @@ extern "C" {
 #endif
 
 typedef enum {
-  kPmModeClockGate = 0,  // clock gated, state kept, fast wake
-  kPmModeRetentive = 1,  // + isolation and memory retention
-  kPmModeOff       = 2,  // + reset and power switch off, state lost
+  kPmModeClockGate = 0, // clock gated, state kept, fast wake
+  kPmModeRetentive = 1, // + isolation and memory retention
+  kPmModeOff = 2,       // + reset and power switch off, state lost
 } pm_mode_t;
 
 void pm_pd_set_mode(uint32_t pd, pm_mode_t mode);
