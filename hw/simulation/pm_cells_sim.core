@@ -1,0 +1,20 @@
+CAPI=2:
+
+# Copyright 2026 Politecnico di Torino
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+name: "x-alp:sim:pm_cells"
+description: "Behavioral clock gates and power switches"
+
+filesets:
+  files_sim:
+    files:
+      - clock_gate_wrapper.sv
+      - power_switch_wrapper.sv
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - files_sim
