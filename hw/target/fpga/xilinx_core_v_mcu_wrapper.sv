@@ -95,6 +95,14 @@ module xilinx_core_v_mcu_wrapper #(
     assign clk_gen = clk_i;
 `endif
 
+    // External power domains: ideal power switches, the ack follows the switch
+    power_manager_pkg::power_manager_out_t [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] pwr_ctrl;
+    power_manager_pkg::power_manager_in_t  [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] pwr_ack;
+
+    for (genvar i = 0; i < core_v_mcu_pkg::NUM_EXT_PD_RND; i++) begin : gen_pwr_ack
+        assign pwr_ack[i].pwrgate_ack_n = pwr_ctrl[i].pwrgate_en_n;
+    end
+
     x_alp x_alp_system_i (
         .clk_i        (clk_gen),
         .rst_ni       (rst_n),
@@ -116,7 +124,10 @@ module xilinx_core_v_mcu_wrapper #(
         .ext_llc_rsp_i(llc_rsp),
         .ext_reg_req_o(),
         .ext_reg_rsp_i('0),
-        .test_mode_i  (1'b0)
+        .test_mode_i  (1'b0),
+        .ext_intr_i   ('0),
+        .ext_pwr_ctrl_o(pwr_ctrl),
+        .ext_pwr_ack_i (pwr_ack)
     );
 
     assign exit_value_o = exit_value[0];
