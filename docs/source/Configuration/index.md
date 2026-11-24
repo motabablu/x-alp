@@ -24,6 +24,7 @@ MemoryConfiguration
 BusConfiguration
 AddressMap
 PeripheralConfiguration
+PowerConfiguration
 DebugSS
 PadConfiguration
 LinkerConfiguration

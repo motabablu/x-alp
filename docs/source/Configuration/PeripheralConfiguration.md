@@ -9,7 +9,7 @@ Peripherals are grouped in peripheral domains, instances of {py:class}`~xheep_ge
 Each domain:
 
 - must have an [address map](./AddressMap.md) region with the same name, which gives it its start address and length;
-- can be assigned to a power domain (`power_domain`, `None` means always-on) and can support clock gating (`clock_gating`). These properties are available to the templates through {py:meth}`~xheep_gen.xalp.XAlp.get_power_domains`, {py:meth}`~xheep_gen.xalp.XAlp.get_always_on_domains` and {py:meth}`~xheep_gen.xalp.XAlp.get_clock_gated_domains`. The current X-ALP RTL does not implement power or clock gating yet;
+- can be assigned to a power domain (`power_domain`, `None` means always-on) and can support clock gating (`clock_gating`). These properties are available to the templates through {py:meth}`~xheep_gen.xalp.XAlp.get_power_domains`, {py:meth}`~xheep_gen.xalp.XAlp.get_always_on_domains` and {py:meth}`~xheep_gen.xalp.XAlp.get_clock_gated_domains`. The X-ALP RTL does not use them: power and clock gating are configured per block with the power manager, see [Power Configuration](./PowerConfiguration.md);
 - is added to the system with `soc.add_domain()`.
 
 Every peripheral is represented by a Python class, imported from `peripherals.base_peripherals` or `peripherals.user_peripherals`. Each peripheral has an offset and a length, relative to the start of its domain. Peripherals with registers have an HJSON description (see [Generate peripheral registers](../How_to/GenerateRegisters.md)).
