@@ -240,9 +240,7 @@ module core_v_mcu (
     assign pd_isolated[0]              = isolated_cva6_0_0;
     assign pd_pwr_ack[1].pwrgate_ack_n = pwr_ack_axi_llc;
     assign pd_isolated[1]              = isolated_axi_llc_0 & isolated_axi_llc_1;
-    assign ext_pwr_ctrl_o[0]           = pd_pwr_ctrl[2];
-    assign pd_pwr_ack[2]               = ext_pwr_ack_i[0];
-    assign pd_isolated[2]              = 1'b1;
+    assign ext_pwr_ctrl_o              = '{default: power_manager_pkg::PD_ON};
 
     power_manager #(
         .reg_req_t(reg_req_t),

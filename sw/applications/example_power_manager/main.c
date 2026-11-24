@@ -4,13 +4,12 @@
 //
 // Power manager example, subsystem by subsystem (as in X-HEEP), with the
 // power manager SDK. The core itself sleeps in example_cpu_sdk. Needs the
-// default configs/soc.py: power domains cpu, llc (follows_cpu) and
-// external_0, clock gate on the uart, power manager wake-up timer on the PLIC.
+// default configs/soc.py: power domains cpu and llc (follows_cpu), clock
+// gate on the uart, power manager wake-up timer on the PLIC.
 //
 //   Peripherals UART clock gating
 //   Memory      LLC clock gated and retentive together with the CPU, and
 //               switched off after a flush when the program runs from DRAM
-//   External    external power domain switched off and on
 //
 // Calls the configuration does not allow do not compile, e.g.
 //   pm_soc_ctrl_clock_gate(true);  // soc_ctrl is always on
@@ -95,13 +94,6 @@ int main(void) {
     pm_llc_off_with_cpu();
     ok &= check(clock_gated_nap() && canary == 0xC0FFEE, "llc power gating");
   }
-
-  // ------------ EXTERNAL DOMAINS ------------
-  PRINTF("Testing external domains...\n");
-
-  pm_external_0_off();
-  pm_external_0_on();
-  ok &= check(true, "external power gating");
 
   PRINTF("Power manager example %s\n", ok ? "passed" : "FAILED");
   return ok ? EXIT_SUCCESS : EXIT_FAILURE;

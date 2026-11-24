@@ -101,7 +101,7 @@ def config():
             ),
         ],
         clock_gates=[uart],
-        external_domains=1,
+        external_domains=0,
     )
 
     peripherals = PeripheralDomain(

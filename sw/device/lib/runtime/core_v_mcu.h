@@ -169,8 +169,7 @@ extern char __base_dram;
 #define NUM_CORES 1
 #define PD_CPU 0
 #define PD_LLC 1
-#define PD_EXTERNAL_0 2
-#define NUM_PD 3
+#define NUM_PD 2
 // Lets the driver check its view of the register layout
 #define PM_FIRST_PD_MODE_REG_OFFSET POWER_MANAGER_PD_CPU_MODE_REG_OFFSET
 #define CG_UART 0

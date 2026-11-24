@@ -7,7 +7,7 @@
 package power_manager_reg_pkg;
 
     // Address widths within the block
-    parameter int BlockAw = 8;
+    parameter int BlockAw = 7;
 
     ////////////////////////////
     // Typedefs for registers //
@@ -49,22 +49,6 @@ package power_manager_reg_pkg;
 
     typedef struct packed {logic q;} power_manager_reg2hw_pd_llc_wait_ack_reg_t;
 
-    typedef struct packed {logic [1:0] q;} power_manager_reg2hw_pd_external_0_mode_reg_t;
-
-    typedef struct packed {logic q;} power_manager_reg2hw_pd_external_0_sleep_en_reg_t;
-
-    typedef struct packed {logic q;} power_manager_reg2hw_pd_external_0_wfi_mask_reg_t;
-
-    typedef struct packed {logic [31:0] q;} power_manager_reg2hw_pd_external_0_wake_mask_lo_reg_t;
-
-    typedef struct packed {logic [31:0] q;} power_manager_reg2hw_pd_external_0_wake_mask_hi_reg_t;
-
-    typedef struct packed {logic q;} power_manager_reg2hw_pd_external_0_wake_timer_reg_t;
-
-    typedef struct packed {logic [15:0] q;} power_manager_reg2hw_pd_external_0_delay_reg_t;
-
-    typedef struct packed {logic q;} power_manager_reg2hw_pd_external_0_wait_ack_reg_t;
-
     typedef struct packed {logic q;} power_manager_reg2hw_cg_uart_reg_t;
 
     typedef struct packed {logic d;} power_manager_hw2reg_wakeup_timer_status_reg_t;
@@ -91,100 +75,69 @@ package power_manager_reg_pkg;
         struct packed {logic d;} awake;
     } power_manager_hw2reg_pd_llc_status_reg_t;
 
-    typedef struct packed {
-        logic d;
-        logic de;
-    } power_manager_hw2reg_pd_external_0_sleep_en_reg_t;
-
-    typedef struct packed {
-        struct packed {logic d;} sleeping;
-        struct packed {logic d;} ack;
-        struct packed {logic d;} awake;
-    } power_manager_hw2reg_pd_external_0_status_reg_t;
-
     // Register -> HW type
     typedef struct packed {
-        power_manager_reg2hw_wakeup_timer_reg_t wakeup_timer;  // [291:260]
-        power_manager_reg2hw_wakeup_timer_en_reg_t wakeup_timer_en;  // [259:259]
-        power_manager_reg2hw_pd_cpu_mode_reg_t pd_cpu_mode;  // [258:257]
-        power_manager_reg2hw_pd_cpu_sleep_en_reg_t pd_cpu_sleep_en;  // [256:256]
-        power_manager_reg2hw_pd_cpu_wfi_mask_reg_t pd_cpu_wfi_mask;  // [255:255]
-        power_manager_reg2hw_pd_cpu_wake_mask_lo_reg_t pd_cpu_wake_mask_lo;  // [254:223]
-        power_manager_reg2hw_pd_cpu_wake_mask_hi_reg_t pd_cpu_wake_mask_hi;  // [222:191]
-        power_manager_reg2hw_pd_cpu_wake_timer_reg_t pd_cpu_wake_timer;  // [190:190]
-        power_manager_reg2hw_pd_cpu_delay_reg_t pd_cpu_delay;  // [189:174]
-        power_manager_reg2hw_pd_cpu_wait_ack_reg_t pd_cpu_wait_ack;  // [173:173]
-        power_manager_reg2hw_pd_llc_mode_reg_t pd_llc_mode;  // [172:171]
-        power_manager_reg2hw_pd_llc_sleep_en_reg_t pd_llc_sleep_en;  // [170:170]
-        power_manager_reg2hw_pd_llc_wfi_mask_reg_t pd_llc_wfi_mask;  // [169:169]
-        power_manager_reg2hw_pd_llc_wake_mask_lo_reg_t pd_llc_wake_mask_lo;  // [168:137]
-        power_manager_reg2hw_pd_llc_wake_mask_hi_reg_t pd_llc_wake_mask_hi;  // [136:105]
-        power_manager_reg2hw_pd_llc_wake_timer_reg_t pd_llc_wake_timer;  // [104:104]
-        power_manager_reg2hw_pd_llc_delay_reg_t pd_llc_delay;  // [103:88]
-        power_manager_reg2hw_pd_llc_wait_ack_reg_t pd_llc_wait_ack;  // [87:87]
-        power_manager_reg2hw_pd_external_0_mode_reg_t pd_external_0_mode;  // [86:85]
-        power_manager_reg2hw_pd_external_0_sleep_en_reg_t pd_external_0_sleep_en;  // [84:84]
-        power_manager_reg2hw_pd_external_0_wfi_mask_reg_t pd_external_0_wfi_mask;  // [83:83]
-        power_manager_reg2hw_pd_external_0_wake_mask_lo_reg_t pd_external_0_wake_mask_lo; // [82:51]
-        power_manager_reg2hw_pd_external_0_wake_mask_hi_reg_t pd_external_0_wake_mask_hi; // [50:19]
-        power_manager_reg2hw_pd_external_0_wake_timer_reg_t pd_external_0_wake_timer;  // [18:18]
-        power_manager_reg2hw_pd_external_0_delay_reg_t pd_external_0_delay;  // [17:2]
-        power_manager_reg2hw_pd_external_0_wait_ack_reg_t pd_external_0_wait_ack;  // [1:1]
+        power_manager_reg2hw_wakeup_timer_reg_t wakeup_timer;  // [205:174]
+        power_manager_reg2hw_wakeup_timer_en_reg_t wakeup_timer_en;  // [173:173]
+        power_manager_reg2hw_pd_cpu_mode_reg_t pd_cpu_mode;  // [172:171]
+        power_manager_reg2hw_pd_cpu_sleep_en_reg_t pd_cpu_sleep_en;  // [170:170]
+        power_manager_reg2hw_pd_cpu_wfi_mask_reg_t pd_cpu_wfi_mask;  // [169:169]
+        power_manager_reg2hw_pd_cpu_wake_mask_lo_reg_t pd_cpu_wake_mask_lo;  // [168:137]
+        power_manager_reg2hw_pd_cpu_wake_mask_hi_reg_t pd_cpu_wake_mask_hi;  // [136:105]
+        power_manager_reg2hw_pd_cpu_wake_timer_reg_t pd_cpu_wake_timer;  // [104:104]
+        power_manager_reg2hw_pd_cpu_delay_reg_t pd_cpu_delay;  // [103:88]
+        power_manager_reg2hw_pd_cpu_wait_ack_reg_t pd_cpu_wait_ack;  // [87:87]
+        power_manager_reg2hw_pd_llc_mode_reg_t pd_llc_mode;  // [86:85]
+        power_manager_reg2hw_pd_llc_sleep_en_reg_t pd_llc_sleep_en;  // [84:84]
+        power_manager_reg2hw_pd_llc_wfi_mask_reg_t pd_llc_wfi_mask;  // [83:83]
+        power_manager_reg2hw_pd_llc_wake_mask_lo_reg_t pd_llc_wake_mask_lo;  // [82:51]
+        power_manager_reg2hw_pd_llc_wake_mask_hi_reg_t pd_llc_wake_mask_hi;  // [50:19]
+        power_manager_reg2hw_pd_llc_wake_timer_reg_t pd_llc_wake_timer;  // [18:18]
+        power_manager_reg2hw_pd_llc_delay_reg_t pd_llc_delay;  // [17:2]
+        power_manager_reg2hw_pd_llc_wait_ack_reg_t pd_llc_wait_ack;  // [1:1]
         power_manager_reg2hw_cg_uart_reg_t cg_uart;  // [0:0]
     } power_manager_reg2hw_t;
 
     // HW -> register type
     typedef struct packed {
-        power_manager_hw2reg_wakeup_timer_status_reg_t wakeup_timer_status;  // [15:15]
-        power_manager_hw2reg_pd_cpu_sleep_en_reg_t pd_cpu_sleep_en;  // [14:13]
-        power_manager_hw2reg_pd_cpu_status_reg_t pd_cpu_status;  // [12:10]
-        power_manager_hw2reg_pd_llc_sleep_en_reg_t pd_llc_sleep_en;  // [9:8]
-        power_manager_hw2reg_pd_llc_status_reg_t pd_llc_status;  // [7:5]
-        power_manager_hw2reg_pd_external_0_sleep_en_reg_t pd_external_0_sleep_en;  // [4:3]
-        power_manager_hw2reg_pd_external_0_status_reg_t pd_external_0_status;  // [2:0]
+        power_manager_hw2reg_wakeup_timer_status_reg_t wakeup_timer_status;  // [10:10]
+        power_manager_hw2reg_pd_cpu_sleep_en_reg_t pd_cpu_sleep_en;  // [9:8]
+        power_manager_hw2reg_pd_cpu_status_reg_t pd_cpu_status;  // [7:5]
+        power_manager_hw2reg_pd_llc_sleep_en_reg_t pd_llc_sleep_en;  // [4:3]
+        power_manager_hw2reg_pd_llc_status_reg_t pd_llc_status;  // [2:0]
     } power_manager_hw2reg_t;
 
     // Register offsets
-    parameter logic [BlockAw-1:0] POWER_MANAGER_WAKEUP_STATE_0_OFFSET = 8'h0;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_RESTORE_ADDR_LO_0_OFFSET = 8'h4;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_RESTORE_ADDR_HI_0_OFFSET = 8'h8;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_WAKEUP_TIMER_OFFSET = 8'hc;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_WAKEUP_TIMER_EN_OFFSET = 8'h10;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_WAKEUP_TIMER_STATUS_OFFSET = 8'h14;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_MODE_OFFSET = 8'h18;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_SLEEP_EN_OFFSET = 8'h1c;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WFI_MASK_OFFSET = 8'h20;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WAKE_MASK_LO_OFFSET = 8'h24;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WAKE_MASK_HI_OFFSET = 8'h28;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WAKE_TIMER_OFFSET = 8'h2c;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_DELAY_OFFSET = 8'h30;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WAIT_ACK_OFFSET = 8'h34;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_STATUS_OFFSET = 8'h38;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_MODE_OFFSET = 8'h3c;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_SLEEP_EN_OFFSET = 8'h40;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WFI_MASK_OFFSET = 8'h44;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WAKE_MASK_LO_OFFSET = 8'h48;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WAKE_MASK_HI_OFFSET = 8'h4c;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WAKE_TIMER_OFFSET = 8'h50;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_DELAY_OFFSET = 8'h54;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WAIT_ACK_OFFSET = 8'h58;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_STATUS_OFFSET = 8'h5c;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_EXTERNAL_0_MODE_OFFSET = 8'h60;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_EXTERNAL_0_SLEEP_EN_OFFSET = 8'h64;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_EXTERNAL_0_WFI_MASK_OFFSET = 8'h68;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_EXTERNAL_0_WAKE_MASK_LO_OFFSET = 8'h6c;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_EXTERNAL_0_WAKE_MASK_HI_OFFSET = 8'h70;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_EXTERNAL_0_WAKE_TIMER_OFFSET = 8'h74;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_EXTERNAL_0_DELAY_OFFSET = 8'h78;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_EXTERNAL_0_WAIT_ACK_OFFSET = 8'h7c;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_EXTERNAL_0_STATUS_OFFSET = 8'h80;
-    parameter logic [BlockAw-1:0] POWER_MANAGER_CG_UART_OFFSET = 8'h84;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_WAKEUP_STATE_0_OFFSET = 7'h0;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_RESTORE_ADDR_LO_0_OFFSET = 7'h4;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_RESTORE_ADDR_HI_0_OFFSET = 7'h8;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_WAKEUP_TIMER_OFFSET = 7'hc;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_WAKEUP_TIMER_EN_OFFSET = 7'h10;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_WAKEUP_TIMER_STATUS_OFFSET = 7'h14;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_MODE_OFFSET = 7'h18;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_SLEEP_EN_OFFSET = 7'h1c;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WFI_MASK_OFFSET = 7'h20;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WAKE_MASK_LO_OFFSET = 7'h24;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WAKE_MASK_HI_OFFSET = 7'h28;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WAKE_TIMER_OFFSET = 7'h2c;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_DELAY_OFFSET = 7'h30;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_WAIT_ACK_OFFSET = 7'h34;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_CPU_STATUS_OFFSET = 7'h38;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_MODE_OFFSET = 7'h3c;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_SLEEP_EN_OFFSET = 7'h40;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WFI_MASK_OFFSET = 7'h44;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WAKE_MASK_LO_OFFSET = 7'h48;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WAKE_MASK_HI_OFFSET = 7'h4c;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WAKE_TIMER_OFFSET = 7'h50;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_DELAY_OFFSET = 7'h54;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_WAIT_ACK_OFFSET = 7'h58;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_PD_LLC_STATUS_OFFSET = 7'h5c;
+    parameter logic [BlockAw-1:0] POWER_MANAGER_CG_UART_OFFSET = 7'h60;
 
     // Reset values for hwext registers and their fields
     parameter logic [0:0] POWER_MANAGER_WAKEUP_TIMER_STATUS_RESVAL = 1'h0;
     parameter logic [2:0] POWER_MANAGER_PD_CPU_STATUS_RESVAL = 3'h0;
     parameter logic [2:0] POWER_MANAGER_PD_LLC_STATUS_RESVAL = 3'h0;
-    parameter logic [2:0] POWER_MANAGER_PD_EXTERNAL_0_STATUS_RESVAL = 3'h0;
 
     // Register index
     typedef enum int {
@@ -212,20 +165,11 @@ package power_manager_reg_pkg;
         POWER_MANAGER_PD_LLC_DELAY,
         POWER_MANAGER_PD_LLC_WAIT_ACK,
         POWER_MANAGER_PD_LLC_STATUS,
-        POWER_MANAGER_PD_EXTERNAL_0_MODE,
-        POWER_MANAGER_PD_EXTERNAL_0_SLEEP_EN,
-        POWER_MANAGER_PD_EXTERNAL_0_WFI_MASK,
-        POWER_MANAGER_PD_EXTERNAL_0_WAKE_MASK_LO,
-        POWER_MANAGER_PD_EXTERNAL_0_WAKE_MASK_HI,
-        POWER_MANAGER_PD_EXTERNAL_0_WAKE_TIMER,
-        POWER_MANAGER_PD_EXTERNAL_0_DELAY,
-        POWER_MANAGER_PD_EXTERNAL_0_WAIT_ACK,
-        POWER_MANAGER_PD_EXTERNAL_0_STATUS,
         POWER_MANAGER_CG_UART
     } power_manager_id_e;
 
     // Register width information to check illegal writes
-    parameter logic [3:0] POWER_MANAGER_PERMIT[34] = '{
+    parameter logic [3:0] POWER_MANAGER_PERMIT[25] = '{
         4'b0001,  // index[ 0] POWER_MANAGER_WAKEUP_STATE_0
         4'b1111,  // index[ 1] POWER_MANAGER_RESTORE_ADDR_LO_0
         4'b1111,  // index[ 2] POWER_MANAGER_RESTORE_ADDR_HI_0
@@ -250,16 +194,7 @@ package power_manager_reg_pkg;
         4'b0011,  // index[21] POWER_MANAGER_PD_LLC_DELAY
         4'b0001,  // index[22] POWER_MANAGER_PD_LLC_WAIT_ACK
         4'b0001,  // index[23] POWER_MANAGER_PD_LLC_STATUS
-        4'b0001,  // index[24] POWER_MANAGER_PD_EXTERNAL_0_MODE
-        4'b0001,  // index[25] POWER_MANAGER_PD_EXTERNAL_0_SLEEP_EN
-        4'b0001,  // index[26] POWER_MANAGER_PD_EXTERNAL_0_WFI_MASK
-        4'b1111,  // index[27] POWER_MANAGER_PD_EXTERNAL_0_WAKE_MASK_LO
-        4'b1111,  // index[28] POWER_MANAGER_PD_EXTERNAL_0_WAKE_MASK_HI
-        4'b0001,  // index[29] POWER_MANAGER_PD_EXTERNAL_0_WAKE_TIMER
-        4'b0011,  // index[30] POWER_MANAGER_PD_EXTERNAL_0_DELAY
-        4'b0001,  // index[31] POWER_MANAGER_PD_EXTERNAL_0_WAIT_ACK
-        4'b0001,  // index[32] POWER_MANAGER_PD_EXTERNAL_0_STATUS
-        4'b0001  // index[33] POWER_MANAGER_CG_UART
+        4'b0001  // index[24] POWER_MANAGER_CG_UART
     };
 
 endpackage

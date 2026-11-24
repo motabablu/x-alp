@@ -10,7 +10,7 @@
 module power_manager_reg_top #(
     parameter type reg_req_t = logic,
     parameter type reg_rsp_t = logic,
-    parameter int AW = 8
+    parameter int AW = 7
 ) (
     input  logic                                         clk_i,
     input  logic                                         rst_ni,
@@ -145,36 +145,6 @@ module power_manager_reg_top #(
     logic        pd_llc_status_ack_re;
     logic        pd_llc_status_awake_qs;
     logic        pd_llc_status_awake_re;
-    logic [ 1:0] pd_external_0_mode_qs;
-    logic [ 1:0] pd_external_0_mode_wd;
-    logic        pd_external_0_mode_we;
-    logic        pd_external_0_sleep_en_qs;
-    logic        pd_external_0_sleep_en_wd;
-    logic        pd_external_0_sleep_en_we;
-    logic        pd_external_0_wfi_mask_qs;
-    logic        pd_external_0_wfi_mask_wd;
-    logic        pd_external_0_wfi_mask_we;
-    logic [31:0] pd_external_0_wake_mask_lo_qs;
-    logic [31:0] pd_external_0_wake_mask_lo_wd;
-    logic        pd_external_0_wake_mask_lo_we;
-    logic [31:0] pd_external_0_wake_mask_hi_qs;
-    logic [31:0] pd_external_0_wake_mask_hi_wd;
-    logic        pd_external_0_wake_mask_hi_we;
-    logic        pd_external_0_wake_timer_qs;
-    logic        pd_external_0_wake_timer_wd;
-    logic        pd_external_0_wake_timer_we;
-    logic [15:0] pd_external_0_delay_qs;
-    logic [15:0] pd_external_0_delay_wd;
-    logic        pd_external_0_delay_we;
-    logic        pd_external_0_wait_ack_qs;
-    logic        pd_external_0_wait_ack_wd;
-    logic        pd_external_0_wait_ack_we;
-    logic        pd_external_0_status_sleeping_qs;
-    logic        pd_external_0_status_sleeping_re;
-    logic        pd_external_0_status_ack_qs;
-    logic        pd_external_0_status_ack_re;
-    logic        pd_external_0_status_awake_qs;
-    logic        pd_external_0_status_awake_re;
     logic        cg_uart_qs;
     logic        cg_uart_wd;
     logic        cg_uart_we;
@@ -857,269 +827,6 @@ module power_manager_reg_top #(
     );
 
 
-    // R[pd_external_0_mode]: V(False)
-
-    prim_subreg #(
-        .DW      (2),
-        .SWACCESS("RW"),
-        .RESVAL  (2'h0)
-    ) u_pd_external_0_mode (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // from register interface
-        .we(pd_external_0_mode_we),
-        .wd(pd_external_0_mode_wd),
-
-        // from internal hardware
-        .de(1'b0),
-        .d ('0),
-
-        // to internal hardware
-        .qe(),
-        .q (reg2hw.pd_external_0_mode.q),
-
-        // to register interface (read)
-        .qs(pd_external_0_mode_qs)
-    );
-
-
-    // R[pd_external_0_sleep_en]: V(False)
-
-    prim_subreg #(
-        .DW      (1),
-        .SWACCESS("RW"),
-        .RESVAL  (1'h0)
-    ) u_pd_external_0_sleep_en (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // from register interface
-        .we(pd_external_0_sleep_en_we),
-        .wd(pd_external_0_sleep_en_wd),
-
-        // from internal hardware
-        .de(hw2reg.pd_external_0_sleep_en.de),
-        .d (hw2reg.pd_external_0_sleep_en.d),
-
-        // to internal hardware
-        .qe(),
-        .q (reg2hw.pd_external_0_sleep_en.q),
-
-        // to register interface (read)
-        .qs(pd_external_0_sleep_en_qs)
-    );
-
-
-    // R[pd_external_0_wfi_mask]: V(False)
-
-    prim_subreg #(
-        .DW      (1),
-        .SWACCESS("RW"),
-        .RESVAL  (1'h0)
-    ) u_pd_external_0_wfi_mask (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // from register interface
-        .we(pd_external_0_wfi_mask_we),
-        .wd(pd_external_0_wfi_mask_wd),
-
-        // from internal hardware
-        .de(1'b0),
-        .d ('0),
-
-        // to internal hardware
-        .qe(),
-        .q (reg2hw.pd_external_0_wfi_mask.q),
-
-        // to register interface (read)
-        .qs(pd_external_0_wfi_mask_qs)
-    );
-
-
-    // R[pd_external_0_wake_mask_lo]: V(False)
-
-    prim_subreg #(
-        .DW      (32),
-        .SWACCESS("RW"),
-        .RESVAL  (32'h0)
-    ) u_pd_external_0_wake_mask_lo (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // from register interface
-        .we(pd_external_0_wake_mask_lo_we),
-        .wd(pd_external_0_wake_mask_lo_wd),
-
-        // from internal hardware
-        .de(1'b0),
-        .d ('0),
-
-        // to internal hardware
-        .qe(),
-        .q (reg2hw.pd_external_0_wake_mask_lo.q),
-
-        // to register interface (read)
-        .qs(pd_external_0_wake_mask_lo_qs)
-    );
-
-
-    // R[pd_external_0_wake_mask_hi]: V(False)
-
-    prim_subreg #(
-        .DW      (32),
-        .SWACCESS("RW"),
-        .RESVAL  (32'h0)
-    ) u_pd_external_0_wake_mask_hi (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // from register interface
-        .we(pd_external_0_wake_mask_hi_we),
-        .wd(pd_external_0_wake_mask_hi_wd),
-
-        // from internal hardware
-        .de(1'b0),
-        .d ('0),
-
-        // to internal hardware
-        .qe(),
-        .q (reg2hw.pd_external_0_wake_mask_hi.q),
-
-        // to register interface (read)
-        .qs(pd_external_0_wake_mask_hi_qs)
-    );
-
-
-    // R[pd_external_0_wake_timer]: V(False)
-
-    prim_subreg #(
-        .DW      (1),
-        .SWACCESS("RW"),
-        .RESVAL  (1'h0)
-    ) u_pd_external_0_wake_timer (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // from register interface
-        .we(pd_external_0_wake_timer_we),
-        .wd(pd_external_0_wake_timer_wd),
-
-        // from internal hardware
-        .de(1'b0),
-        .d ('0),
-
-        // to internal hardware
-        .qe(),
-        .q (reg2hw.pd_external_0_wake_timer.q),
-
-        // to register interface (read)
-        .qs(pd_external_0_wake_timer_qs)
-    );
-
-
-    // R[pd_external_0_delay]: V(False)
-
-    prim_subreg #(
-        .DW      (16),
-        .SWACCESS("RW"),
-        .RESVAL  (16'h4)
-    ) u_pd_external_0_delay (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // from register interface
-        .we(pd_external_0_delay_we),
-        .wd(pd_external_0_delay_wd),
-
-        // from internal hardware
-        .de(1'b0),
-        .d ('0),
-
-        // to internal hardware
-        .qe(),
-        .q (reg2hw.pd_external_0_delay.q),
-
-        // to register interface (read)
-        .qs(pd_external_0_delay_qs)
-    );
-
-
-    // R[pd_external_0_wait_ack]: V(False)
-
-    prim_subreg #(
-        .DW      (1),
-        .SWACCESS("RW"),
-        .RESVAL  (1'h1)
-    ) u_pd_external_0_wait_ack (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // from register interface
-        .we(pd_external_0_wait_ack_we),
-        .wd(pd_external_0_wait_ack_wd),
-
-        // from internal hardware
-        .de(1'b0),
-        .d ('0),
-
-        // to internal hardware
-        .qe(),
-        .q (reg2hw.pd_external_0_wait_ack.q),
-
-        // to register interface (read)
-        .qs(pd_external_0_wait_ack_qs)
-    );
-
-
-    // R[pd_external_0_status]: V(True)
-
-    //   F[sleeping]: 0:0
-    prim_subreg_ext #(
-        .DW(1)
-    ) u_pd_external_0_status_sleeping (
-        .re (pd_external_0_status_sleeping_re),
-        .we (1'b0),
-        .wd ('0),
-        .d  (hw2reg.pd_external_0_status.sleeping.d),
-        .qre(),
-        .qe (),
-        .q  (),
-        .qs (pd_external_0_status_sleeping_qs)
-    );
-
-
-    //   F[ack]: 1:1
-    prim_subreg_ext #(
-        .DW(1)
-    ) u_pd_external_0_status_ack (
-        .re (pd_external_0_status_ack_re),
-        .we (1'b0),
-        .wd ('0),
-        .d  (hw2reg.pd_external_0_status.ack.d),
-        .qre(),
-        .qe (),
-        .q  (),
-        .qs (pd_external_0_status_ack_qs)
-    );
-
-
-    //   F[awake]: 2:2
-    prim_subreg_ext #(
-        .DW(1)
-    ) u_pd_external_0_status_awake (
-        .re (pd_external_0_status_awake_re),
-        .we (1'b0),
-        .wd ('0),
-        .d  (hw2reg.pd_external_0_status.awake.d),
-        .qre(),
-        .qe (),
-        .q  (),
-        .qs (pd_external_0_status_awake_qs)
-    );
-
-
     // R[cg_uart]: V(False)
 
     prim_subreg #(
@@ -1149,7 +856,7 @@ module power_manager_reg_top #(
 
 
 
-    logic [33:0] addr_hit;
+    logic [24:0] addr_hit;
     always_comb begin
         addr_hit     = '0;
         addr_hit[0]  = (reg_addr == POWER_MANAGER_WAKEUP_STATE_0_OFFSET);
@@ -1176,16 +883,7 @@ module power_manager_reg_top #(
         addr_hit[21] = (reg_addr == POWER_MANAGER_PD_LLC_DELAY_OFFSET);
         addr_hit[22] = (reg_addr == POWER_MANAGER_PD_LLC_WAIT_ACK_OFFSET);
         addr_hit[23] = (reg_addr == POWER_MANAGER_PD_LLC_STATUS_OFFSET);
-        addr_hit[24] = (reg_addr == POWER_MANAGER_PD_EXTERNAL_0_MODE_OFFSET);
-        addr_hit[25] = (reg_addr == POWER_MANAGER_PD_EXTERNAL_0_SLEEP_EN_OFFSET);
-        addr_hit[26] = (reg_addr == POWER_MANAGER_PD_EXTERNAL_0_WFI_MASK_OFFSET);
-        addr_hit[27] = (reg_addr == POWER_MANAGER_PD_EXTERNAL_0_WAKE_MASK_LO_OFFSET);
-        addr_hit[28] = (reg_addr == POWER_MANAGER_PD_EXTERNAL_0_WAKE_MASK_HI_OFFSET);
-        addr_hit[29] = (reg_addr == POWER_MANAGER_PD_EXTERNAL_0_WAKE_TIMER_OFFSET);
-        addr_hit[30] = (reg_addr == POWER_MANAGER_PD_EXTERNAL_0_DELAY_OFFSET);
-        addr_hit[31] = (reg_addr == POWER_MANAGER_PD_EXTERNAL_0_WAIT_ACK_OFFSET);
-        addr_hit[32] = (reg_addr == POWER_MANAGER_PD_EXTERNAL_0_STATUS_OFFSET);
-        addr_hit[33] = (reg_addr == POWER_MANAGER_CG_UART_OFFSET);
+        addr_hit[24] = (reg_addr == POWER_MANAGER_CG_UART_OFFSET);
     end
 
     assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0;
@@ -1217,127 +915,88 @@ module power_manager_reg_top #(
                (addr_hit[21] & (|(POWER_MANAGER_PERMIT[21] & ~reg_be))) |
                (addr_hit[22] & (|(POWER_MANAGER_PERMIT[22] & ~reg_be))) |
                (addr_hit[23] & (|(POWER_MANAGER_PERMIT[23] & ~reg_be))) |
-               (addr_hit[24] & (|(POWER_MANAGER_PERMIT[24] & ~reg_be))) |
-               (addr_hit[25] & (|(POWER_MANAGER_PERMIT[25] & ~reg_be))) |
-               (addr_hit[26] & (|(POWER_MANAGER_PERMIT[26] & ~reg_be))) |
-               (addr_hit[27] & (|(POWER_MANAGER_PERMIT[27] & ~reg_be))) |
-               (addr_hit[28] & (|(POWER_MANAGER_PERMIT[28] & ~reg_be))) |
-               (addr_hit[29] & (|(POWER_MANAGER_PERMIT[29] & ~reg_be))) |
-               (addr_hit[30] & (|(POWER_MANAGER_PERMIT[30] & ~reg_be))) |
-               (addr_hit[31] & (|(POWER_MANAGER_PERMIT[31] & ~reg_be))) |
-               (addr_hit[32] & (|(POWER_MANAGER_PERMIT[32] & ~reg_be))) |
-               (addr_hit[33] & (|(POWER_MANAGER_PERMIT[33] & ~reg_be)))));
+               (addr_hit[24] & (|(POWER_MANAGER_PERMIT[24] & ~reg_be)))));
     end
 
-    assign wakeup_state_0_we                = addr_hit[0] & reg_we & !reg_error;
-    assign wakeup_state_0_wd                = reg_wdata[0];
+    assign wakeup_state_0_we         = addr_hit[0] & reg_we & !reg_error;
+    assign wakeup_state_0_wd         = reg_wdata[0];
 
-    assign restore_addr_lo_0_we             = addr_hit[1] & reg_we & !reg_error;
-    assign restore_addr_lo_0_wd             = reg_wdata[31:0];
+    assign restore_addr_lo_0_we      = addr_hit[1] & reg_we & !reg_error;
+    assign restore_addr_lo_0_wd      = reg_wdata[31:0];
 
-    assign restore_addr_hi_0_we             = addr_hit[2] & reg_we & !reg_error;
-    assign restore_addr_hi_0_wd             = reg_wdata[31:0];
+    assign restore_addr_hi_0_we      = addr_hit[2] & reg_we & !reg_error;
+    assign restore_addr_hi_0_wd      = reg_wdata[31:0];
 
-    assign wakeup_timer_we                  = addr_hit[3] & reg_we & !reg_error;
-    assign wakeup_timer_wd                  = reg_wdata[31:0];
+    assign wakeup_timer_we           = addr_hit[3] & reg_we & !reg_error;
+    assign wakeup_timer_wd           = reg_wdata[31:0];
 
-    assign wakeup_timer_en_we               = addr_hit[4] & reg_we & !reg_error;
-    assign wakeup_timer_en_wd               = reg_wdata[0];
+    assign wakeup_timer_en_we        = addr_hit[4] & reg_we & !reg_error;
+    assign wakeup_timer_en_wd        = reg_wdata[0];
 
-    assign wakeup_timer_status_re           = addr_hit[5] & reg_re & !reg_error;
+    assign wakeup_timer_status_re    = addr_hit[5] & reg_re & !reg_error;
 
-    assign pd_cpu_mode_we                   = addr_hit[6] & reg_we & !reg_error;
-    assign pd_cpu_mode_wd                   = reg_wdata[1:0];
+    assign pd_cpu_mode_we            = addr_hit[6] & reg_we & !reg_error;
+    assign pd_cpu_mode_wd            = reg_wdata[1:0];
 
-    assign pd_cpu_sleep_en_we               = addr_hit[7] & reg_we & !reg_error;
-    assign pd_cpu_sleep_en_wd               = reg_wdata[0];
+    assign pd_cpu_sleep_en_we        = addr_hit[7] & reg_we & !reg_error;
+    assign pd_cpu_sleep_en_wd        = reg_wdata[0];
 
-    assign pd_cpu_wfi_mask_we               = addr_hit[8] & reg_we & !reg_error;
-    assign pd_cpu_wfi_mask_wd               = reg_wdata[0];
+    assign pd_cpu_wfi_mask_we        = addr_hit[8] & reg_we & !reg_error;
+    assign pd_cpu_wfi_mask_wd        = reg_wdata[0];
 
-    assign pd_cpu_wake_mask_lo_we           = addr_hit[9] & reg_we & !reg_error;
-    assign pd_cpu_wake_mask_lo_wd           = reg_wdata[31:0];
+    assign pd_cpu_wake_mask_lo_we    = addr_hit[9] & reg_we & !reg_error;
+    assign pd_cpu_wake_mask_lo_wd    = reg_wdata[31:0];
 
-    assign pd_cpu_wake_mask_hi_we           = addr_hit[10] & reg_we & !reg_error;
-    assign pd_cpu_wake_mask_hi_wd           = reg_wdata[31:0];
+    assign pd_cpu_wake_mask_hi_we    = addr_hit[10] & reg_we & !reg_error;
+    assign pd_cpu_wake_mask_hi_wd    = reg_wdata[31:0];
 
-    assign pd_cpu_wake_timer_we             = addr_hit[11] & reg_we & !reg_error;
-    assign pd_cpu_wake_timer_wd             = reg_wdata[0];
+    assign pd_cpu_wake_timer_we      = addr_hit[11] & reg_we & !reg_error;
+    assign pd_cpu_wake_timer_wd      = reg_wdata[0];
 
-    assign pd_cpu_delay_we                  = addr_hit[12] & reg_we & !reg_error;
-    assign pd_cpu_delay_wd                  = reg_wdata[15:0];
+    assign pd_cpu_delay_we           = addr_hit[12] & reg_we & !reg_error;
+    assign pd_cpu_delay_wd           = reg_wdata[15:0];
 
-    assign pd_cpu_wait_ack_we               = addr_hit[13] & reg_we & !reg_error;
-    assign pd_cpu_wait_ack_wd               = reg_wdata[0];
+    assign pd_cpu_wait_ack_we        = addr_hit[13] & reg_we & !reg_error;
+    assign pd_cpu_wait_ack_wd        = reg_wdata[0];
 
-    assign pd_cpu_status_sleeping_re        = addr_hit[14] & reg_re & !reg_error;
+    assign pd_cpu_status_sleeping_re = addr_hit[14] & reg_re & !reg_error;
 
-    assign pd_cpu_status_ack_re             = addr_hit[14] & reg_re & !reg_error;
+    assign pd_cpu_status_ack_re      = addr_hit[14] & reg_re & !reg_error;
 
-    assign pd_cpu_status_awake_re           = addr_hit[14] & reg_re & !reg_error;
+    assign pd_cpu_status_awake_re    = addr_hit[14] & reg_re & !reg_error;
 
-    assign pd_llc_mode_we                   = addr_hit[15] & reg_we & !reg_error;
-    assign pd_llc_mode_wd                   = reg_wdata[1:0];
+    assign pd_llc_mode_we            = addr_hit[15] & reg_we & !reg_error;
+    assign pd_llc_mode_wd            = reg_wdata[1:0];
 
-    assign pd_llc_sleep_en_we               = addr_hit[16] & reg_we & !reg_error;
-    assign pd_llc_sleep_en_wd               = reg_wdata[0];
+    assign pd_llc_sleep_en_we        = addr_hit[16] & reg_we & !reg_error;
+    assign pd_llc_sleep_en_wd        = reg_wdata[0];
 
-    assign pd_llc_wfi_mask_we               = addr_hit[17] & reg_we & !reg_error;
-    assign pd_llc_wfi_mask_wd               = reg_wdata[0];
+    assign pd_llc_wfi_mask_we        = addr_hit[17] & reg_we & !reg_error;
+    assign pd_llc_wfi_mask_wd        = reg_wdata[0];
 
-    assign pd_llc_wake_mask_lo_we           = addr_hit[18] & reg_we & !reg_error;
-    assign pd_llc_wake_mask_lo_wd           = reg_wdata[31:0];
+    assign pd_llc_wake_mask_lo_we    = addr_hit[18] & reg_we & !reg_error;
+    assign pd_llc_wake_mask_lo_wd    = reg_wdata[31:0];
 
-    assign pd_llc_wake_mask_hi_we           = addr_hit[19] & reg_we & !reg_error;
-    assign pd_llc_wake_mask_hi_wd           = reg_wdata[31:0];
+    assign pd_llc_wake_mask_hi_we    = addr_hit[19] & reg_we & !reg_error;
+    assign pd_llc_wake_mask_hi_wd    = reg_wdata[31:0];
 
-    assign pd_llc_wake_timer_we             = addr_hit[20] & reg_we & !reg_error;
-    assign pd_llc_wake_timer_wd             = reg_wdata[0];
+    assign pd_llc_wake_timer_we      = addr_hit[20] & reg_we & !reg_error;
+    assign pd_llc_wake_timer_wd      = reg_wdata[0];
 
-    assign pd_llc_delay_we                  = addr_hit[21] & reg_we & !reg_error;
-    assign pd_llc_delay_wd                  = reg_wdata[15:0];
+    assign pd_llc_delay_we           = addr_hit[21] & reg_we & !reg_error;
+    assign pd_llc_delay_wd           = reg_wdata[15:0];
 
-    assign pd_llc_wait_ack_we               = addr_hit[22] & reg_we & !reg_error;
-    assign pd_llc_wait_ack_wd               = reg_wdata[0];
+    assign pd_llc_wait_ack_we        = addr_hit[22] & reg_we & !reg_error;
+    assign pd_llc_wait_ack_wd        = reg_wdata[0];
 
-    assign pd_llc_status_sleeping_re        = addr_hit[23] & reg_re & !reg_error;
+    assign pd_llc_status_sleeping_re = addr_hit[23] & reg_re & !reg_error;
 
-    assign pd_llc_status_ack_re             = addr_hit[23] & reg_re & !reg_error;
+    assign pd_llc_status_ack_re      = addr_hit[23] & reg_re & !reg_error;
 
-    assign pd_llc_status_awake_re           = addr_hit[23] & reg_re & !reg_error;
+    assign pd_llc_status_awake_re    = addr_hit[23] & reg_re & !reg_error;
 
-    assign pd_external_0_mode_we            = addr_hit[24] & reg_we & !reg_error;
-    assign pd_external_0_mode_wd            = reg_wdata[1:0];
-
-    assign pd_external_0_sleep_en_we        = addr_hit[25] & reg_we & !reg_error;
-    assign pd_external_0_sleep_en_wd        = reg_wdata[0];
-
-    assign pd_external_0_wfi_mask_we        = addr_hit[26] & reg_we & !reg_error;
-    assign pd_external_0_wfi_mask_wd        = reg_wdata[0];
-
-    assign pd_external_0_wake_mask_lo_we    = addr_hit[27] & reg_we & !reg_error;
-    assign pd_external_0_wake_mask_lo_wd    = reg_wdata[31:0];
-
-    assign pd_external_0_wake_mask_hi_we    = addr_hit[28] & reg_we & !reg_error;
-    assign pd_external_0_wake_mask_hi_wd    = reg_wdata[31:0];
-
-    assign pd_external_0_wake_timer_we      = addr_hit[29] & reg_we & !reg_error;
-    assign pd_external_0_wake_timer_wd      = reg_wdata[0];
-
-    assign pd_external_0_delay_we           = addr_hit[30] & reg_we & !reg_error;
-    assign pd_external_0_delay_wd           = reg_wdata[15:0];
-
-    assign pd_external_0_wait_ack_we        = addr_hit[31] & reg_we & !reg_error;
-    assign pd_external_0_wait_ack_wd        = reg_wdata[0];
-
-    assign pd_external_0_status_sleeping_re = addr_hit[32] & reg_re & !reg_error;
-
-    assign pd_external_0_status_ack_re      = addr_hit[32] & reg_re & !reg_error;
-
-    assign pd_external_0_status_awake_re    = addr_hit[32] & reg_re & !reg_error;
-
-    assign cg_uart_we                       = addr_hit[33] & reg_we & !reg_error;
-    assign cg_uart_wd                       = reg_wdata[0];
+    assign cg_uart_we                = addr_hit[24] & reg_we & !reg_error;
+    assign cg_uart_wd                = reg_wdata[0];
 
     // Read data return
     always_comb begin
@@ -1444,44 +1103,6 @@ module power_manager_reg_top #(
             end
 
             addr_hit[24]: begin
-                reg_rdata_next[1:0] = pd_external_0_mode_qs;
-            end
-
-            addr_hit[25]: begin
-                reg_rdata_next[0] = pd_external_0_sleep_en_qs;
-            end
-
-            addr_hit[26]: begin
-                reg_rdata_next[0] = pd_external_0_wfi_mask_qs;
-            end
-
-            addr_hit[27]: begin
-                reg_rdata_next[31:0] = pd_external_0_wake_mask_lo_qs;
-            end
-
-            addr_hit[28]: begin
-                reg_rdata_next[31:0] = pd_external_0_wake_mask_hi_qs;
-            end
-
-            addr_hit[29]: begin
-                reg_rdata_next[0] = pd_external_0_wake_timer_qs;
-            end
-
-            addr_hit[30]: begin
-                reg_rdata_next[15:0] = pd_external_0_delay_qs;
-            end
-
-            addr_hit[31]: begin
-                reg_rdata_next[0] = pd_external_0_wait_ack_qs;
-            end
-
-            addr_hit[32]: begin
-                reg_rdata_next[0] = pd_external_0_status_sleeping_qs;
-                reg_rdata_next[1] = pd_external_0_status_ack_qs;
-                reg_rdata_next[2] = pd_external_0_status_awake_qs;
-            end
-
-            addr_hit[33]: begin
                 reg_rdata_next[0] = cg_uart_qs;
             end
 
@@ -1506,7 +1127,7 @@ module power_manager_reg_top #(
 endmodule
 
 module power_manager_reg_top_intf #(
-    parameter  int AW = 8,
+    parameter  int AW = 7,
     localparam int DW = 32
 ) (
     input logic clk_i,

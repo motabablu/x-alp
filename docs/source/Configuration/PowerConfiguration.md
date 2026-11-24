@@ -17,7 +17,7 @@ power_manager = Power_manager(
         PowerDomain("llc", [llc], modes=["clock_gate", "retentive", "off"], follows_cpu=True),
     ],
     clock_gates=[uart],
-    external_domains=1,
+    external_domains=0,
 )
 
 peripherals = PeripheralDomain(
