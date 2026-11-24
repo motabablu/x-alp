@@ -45,7 +45,14 @@ module core_v_mcu (
 
     // Exit interface
     output logic        exit_valid_o,
-    output logic [31:0] exit_value_o
+    output logic [31:0] exit_value_o,
+
+    // External interrupts (PLIC sources EXT_INTR_*)
+    input logic [core_v_mcu_pkg::NEXT_INT_RND-1:0] ext_intr_i,
+
+    // External power domains: power switches, isolation and retention
+    output power_manager_pkg::power_manager_out_t [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] ext_pwr_ctrl_o,
+    input power_manager_pkg::power_manager_in_t [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] ext_pwr_ack_i
 
 );
 
@@ -63,8 +70,16 @@ module core_v_mcu (
     reg_req_t     [ totalRegSlaves-1:0] reg_req_sig;
     reg_rsp_t     [ totalRegSlaves-1:0] reg_rsp_sig;
 
-    logic         [               15:0] fast_intr;
-    logic         [               15:0] fast_irq;
+    // Interrupts
+    logic         [      PLIC_NINT-1:0] intr_vector;
+    logic                               plic_irq;
+    logic                               plic_msip;
+    logic         [                1:0] timer_irq;
+
+    // Power manager
+    logic         [      NUM_CORES-1:0] core_sleep;
+    logic                               pm_wakeup_timer_irq;
+    logic         [     NUM_CG_RND-1:0] cg_en;
 
     logic                               debug_req;
     logic                               debug_req_sync;
@@ -89,15 +104,164 @@ module core_v_mcu (
     assign debug_req_sync = debug_req_sync_reg[1];
     assign ndmreset_sync  = ndmreset_sync_reg[1];
 
-    power_manager_pkg::power_manager_out_t cpu_subsystem_pwr_ctrl;
-    power_manager_pkg::power_manager_in_t  cpu_subsystem_pwr_ctrl_ack; 
-    power_manager_pkg::power_manager_out_t peripheral_subsystem_pwr_ctrl;
-    power_manager_pkg::power_manager_in_t  peripheral_subsystem_pwr_ctrl_ack;
-    power_manager_pkg::power_manager_out_t memory_subsystem_pwr_ctrl [core_v_mini_mcu_pkg::NUM_BANKS-1:0];
-    power_manager_pkg::power_manager_in_t  memory_subsystem_pwr_ctrl_ack [core_v_mini_mcu_pkg::NUM_BANKS-1:0];
-    power_manager_pkg::power_manager_out_t external_subsystem_pwr_ctrl [core_v_mini_mcu_pkg::EXTERNAL_DOMAINS == 0 ? 1 : core_v_mini_mcu_pkg::EXTERNAL_DOMAINS-1:0];
-    power_manager_pkg::power_manager_in_t  external_subsystem_pwr_ctrl_ack [core_v_mini_mcu_pkg::EXTERNAL_DOMAINS == 0 ? 1 : core_v_mini_mcu_pkg::EXTERNAL_DOMAINS-1:0];
-    power_manager_pkg::power_manager_out_t dma_subsystem_pwr_ctrl [core_v_mini_mcu_pkg::DMA_CH_NUM-1:0];
+    power_manager_pkg::power_manager_out_t [NUM_PD_RND-1:0] pd_pwr_ctrl;
+    power_manager_pkg::power_manager_in_t  [NUM_PD_RND-1:0] pd_pwr_ack;
+    logic                                  [NUM_PD_RND-1:0] pd_isolate;
+    logic                                  [NUM_PD_RND-1:0] pd_isolated;
+
+    logic [NUM_CORES-1:0] core_wfi, core_idle;
+    assign core_sleep = core_wfi & core_idle;
+
+    axi_idle_monitor #(
+        .req_t(axi_mst_req_t),
+        .rsp_t(axi_mst_rsp_t)
+    ) u_axi_idle_cva6_0 (
+        .clk_i (clk_i),
+        .rst_ni(rst_ni),
+        .req_i (axi_master_req_sig[CPU_M_BUS_IDX]),
+        .rsp_i (axi_master_rsp_sig[CPU_M_BUS_IDX]),
+        .idle_o(core_idle[0])
+    );
+
+    // cva6_0
+    logic clk_cva6_0;
+    clock_gate_wrapper u_clock_gate_cva6_0 (
+        .clk_i    (clk_i),
+        .en_i     (pd_pwr_ctrl[0].clkgate_en_n),
+        .test_en_i(test_mode_i),
+        .clk_o    (clk_cva6_0)
+    );
+    logic pwr_ok_cva6_0, pwr_ack_cva6_0;
+    power_switch_wrapper u_power_switch_cva6_0 (
+        .clk_i        (clk_i),
+        .rst_ni       (rst_ni),
+        .switch_en_ni (pd_pwr_ctrl[0].pwrgate_en_n),
+        .switch_ack_no(pwr_ack_cva6_0),
+        .pwr_ok_o     (pwr_ok_cva6_0)
+    );
+    axi_mst_req_t cva6_0_axi0_req;
+    axi_mst_rsp_t cva6_0_axi0_rsp;
+    logic         isolated_cva6_0_0;
+    axi_isolate #(
+        .NumPending          (16),
+        .TerminateTransaction(1'b0),
+        .AtopSupport         (1'b1),
+        .AxiAddrWidth        (AxiAddrWidth),
+        .AxiDataWidth        (AxiDataWidth),
+        .AxiIdWidth          (AxiMstIdWidth),
+        .AxiUserWidth        (AxiUserWidth),
+        .axi_req_t           (axi_mst_req_t),
+        .axi_resp_t          (axi_mst_rsp_t)
+    ) u_axi_isolate_cva6_0_0 (
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .slv_req_i (cva6_0_axi0_req),
+        .slv_resp_o(cva6_0_axi0_rsp),
+        .mst_req_o (axi_master_req_sig[CPU_M_BUS_IDX]),
+        .mst_resp_i(axi_master_rsp_sig[CPU_M_BUS_IDX]),
+        .isolate_i (pd_isolate[0]),
+        .isolated_o(isolated_cva6_0_0)
+    );
+
+    // axi_llc
+    logic clk_axi_llc;
+    clock_gate_wrapper u_clock_gate_axi_llc (
+        .clk_i    (clk_i),
+        .en_i     (pd_pwr_ctrl[1].clkgate_en_n),
+        .test_en_i(test_mode_i),
+        .clk_o    (clk_axi_llc)
+    );
+    logic pwr_ok_axi_llc, pwr_ack_axi_llc;
+    power_switch_wrapper u_power_switch_axi_llc (
+        .clk_i        (clk_i),
+        .rst_ni       (rst_ni),
+        .switch_en_ni (pd_pwr_ctrl[1].pwrgate_en_n),
+        .switch_ack_no(pwr_ack_axi_llc),
+        .pwr_ok_o     (pwr_ok_axi_llc)
+    );
+    axi_slv_req_t axi_llc_axi0_req;
+    axi_slv_rsp_t axi_llc_axi0_rsp;
+    logic         isolated_axi_llc_0;
+    axi_isolate #(
+        .NumPending          (16),
+        .TerminateTransaction(1'b0),
+        .AtopSupport         (1'b1),
+        .AxiAddrWidth        (AxiAddrWidth),
+        .AxiDataWidth        (AxiDataWidth),
+        .AxiIdWidth          (AxiSlvIdWidth),
+        .AxiUserWidth        (AxiUserWidth),
+        .axi_req_t           (axi_slv_req_t),
+        .axi_resp_t          (axi_slv_rsp_t)
+    ) u_axi_isolate_axi_llc_0 (
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .slv_req_i (axi_slave_req_sig[LLC_S_BUS_IDX]),
+        .slv_resp_o(axi_slave_rsp_sig[LLC_S_BUS_IDX]),
+        .mst_req_o (axi_llc_axi0_req),
+        .mst_resp_i(axi_llc_axi0_rsp),
+        .isolate_i (pd_isolate[1]),
+        .isolated_o(isolated_axi_llc_0)
+    );
+    axi_llc_req_t axi_llc_axi1_req;
+    axi_llc_rsp_t axi_llc_axi1_rsp;
+    logic         isolated_axi_llc_1;
+    axi_isolate #(
+        .NumPending          (16),
+        .TerminateTransaction(1'b0),
+        .AtopSupport         (1'b1),
+        .AxiAddrWidth        (AxiAddrWidth),
+        .AxiDataWidth        (AxiDataWidth),
+        .AxiIdWidth          (AxiLlcIdWidth),
+        .AxiUserWidth        (AxiUserWidth),
+        .axi_req_t           (axi_llc_req_t),
+        .axi_resp_t          (axi_llc_rsp_t)
+    ) u_axi_isolate_axi_llc_1 (
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .slv_req_i (axi_llc_axi1_req),
+        .slv_resp_o(axi_llc_axi1_rsp),
+        .mst_req_o (ext_llc_req_o),
+        .mst_resp_i(ext_llc_rsp_i),
+        .isolate_i (pd_isolate[1]),
+        .isolated_o(isolated_axi_llc_1)
+    );
+
+    // uart
+    logic clk_uart;
+    clock_gate_wrapper u_clock_gate_uart (
+        .clk_i    (clk_i),
+        .en_i     (cg_en[0]),
+        .test_en_i(test_mode_i),
+        .clk_o    (clk_uart)
+    );
+
+    // Power domain ack (all its switches closed) and bus isolation
+    assign pd_pwr_ack[0].pwrgate_ack_n = pwr_ack_cva6_0;
+    assign pd_isolated[0]              = isolated_cva6_0_0;
+    assign pd_pwr_ack[1].pwrgate_ack_n = pwr_ack_axi_llc;
+    assign pd_isolated[1]              = isolated_axi_llc_0 & isolated_axi_llc_1;
+    assign ext_pwr_ctrl_o[0]           = pd_pwr_ctrl[2];
+    assign pd_pwr_ack[2]               = ext_pwr_ack_i[0];
+    assign pd_isolated[2]              = 1'b1;
+
+    power_manager #(
+        .reg_req_t(reg_req_t),
+        .reg_rsp_t(reg_rsp_t)
+    ) u_power_manager (
+        .clk_i             (clk_i),
+        .rst_ni            (rst_ni),
+        .reg_req_i         (reg_req_sig[POWER_MANAGER_REG_IDX]),
+        .reg_rsp_o         (reg_rsp_sig[POWER_MANAGER_REG_IDX]),
+        .core_sleep_i      (core_sleep),
+        .debug_req_i       (debug_req_sync),
+        .wake_src_i        (intr_vector),
+        .wakeup_timer_irq_o(pm_wakeup_timer_irq),
+        .pd_pwr_ctrl_o     (pd_pwr_ctrl),
+        .pd_pwr_ack_i      (pd_pwr_ack),
+        .pd_isolate_o      (pd_isolate),
+        .pd_isolated_i     (pd_isolated),
+        .cg_en_o           (cg_en)
+    );
 
     //
     //       █████████  ███████████  █████  █████
@@ -110,23 +274,24 @@ module core_v_mcu (
     //      ░░░░░░░░░  ░░░░░          ░░░░░░░░
     //
 
-    // CPU reset: system reset OR debug module reset (active high)
-    assign cpu_rst_n      = rst_ni & ~ndmreset_sync;
+    assign cpu_rst_n = rst_ni & ~ndmreset_sync & pd_pwr_ctrl[0].rst_n & pwr_ok_cva6_0;
 
     cpu_subsystem u_cpu_subsystem (
-        .clk_i      (clk_i),
+        .clk_i      (clk_cva6_0),
         .rst_ni     (cpu_rst_n),
         .boot_addr_i(BOOT_ADDR),
 
         // .cvxif_resp_o (),
         // .cvxif_req_i('0),
 
-        .bus_req_o(axi_master_req_sig[CPU_M_BUS_IDX]),
-        .bus_rsp_i(axi_master_rsp_sig[CPU_M_BUS_IDX]),
+        .bus_req_o(cva6_0_axi0_req),
+        .bus_rsp_i(cva6_0_axi0_rsp),
 
-        .irq_i      (fast_irq[1:0]),
-        .time_irq_i ('0),
-        .debug_req_i(debug_req_sync)
+        .irq_i       ({1'b0, plic_irq}),  // {SEIP, MEIP}
+        .ipi_i       (plic_msip),
+        .time_irq_i  (timer_irq[0]),
+        .debug_req_i (debug_req_sync),
+        .core_sleep_o(core_wfi[0])
     );
 
     //
@@ -159,13 +324,13 @@ module core_v_mcu (
         .mst_resp_t      (axi_llc_rsp_t),
         .rule_full_t     (rule_t)
     ) u_axi_llc (
-        .clk_i              (clk_i),
-        .rst_ni             (rst_ni),
+        .clk_i              (clk_axi_llc),
+        .rst_ni             (rst_ni & pd_pwr_ctrl[1].rst_n & pwr_ok_axi_llc),
         .test_i             ('0),
-        .slv_req_i          (axi_slave_req_sig[LLC_S_BUS_IDX]),
-        .slv_resp_o         (axi_slave_rsp_sig[LLC_S_BUS_IDX]),
-        .mst_req_o          (ext_llc_req_o),
-        .mst_resp_i         (ext_llc_rsp_i),
+        .slv_req_i          (axi_llc_axi0_req),
+        .slv_resp_o         (axi_llc_axi0_rsp),
+        .mst_req_o          (axi_llc_axi1_req),
+        .mst_resp_i         (axi_llc_axi1_rsp),
         .conf_req_i         (reg_req_sig[AXI_LLC_REG_IDX]),
         .conf_resp_o        (reg_rsp_sig[AXI_LLC_REG_IDX]),
         // The LLC re-decodes what the crossbar already routed to it, so these
@@ -248,38 +413,64 @@ module core_v_mcu (
         .reg_rsp_o(reg_rsp_sig[BOOTROM_REG_IDX])
     );
 
-    assign fast_intr = '0;  // No external fast interrupts for now
-
-    fast_intr_ctrl #(
-        .reg_req_t(reg_req_t),
-        .reg_rsp_t(reg_rsp_t)
-    ) u_fast_intr_ctrl (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // Bus Interface
-        .reg_req_i(reg_req_sig[FAST_INTR_CTRL_REG_IDX]),
-        .reg_rsp_o(reg_rsp_sig[FAST_INTR_CTRL_REG_IDX]),
-
-        .fast_intr_i(fast_intr),
-        .fast_intr_o(fast_irq)
-    );
+    logic uart_intr_tx_watermark;
+    logic uart_intr_rx_watermark;
+    logic uart_intr_tx_empty;
+    logic uart_intr_rx_overflow;
+    logic uart_intr_rx_frame_err;
+    logic uart_intr_rx_break_err;
+    logic uart_intr_rx_timeout;
+    logic uart_intr_rx_parity_err;
 
     uart_subsystem u_uart_subsystem (
-        .clk_i                    (clk_i),
+        .clk_i                    (clk_uart),
         .rst_ni                   (rst_ni),
         .uart_reg_req             (reg_req_sig[UART_REG_IDX]),
         .uart_reg_rsp             (reg_rsp_sig[UART_REG_IDX]),
         .uart_rx_i                (uart_rx_i),
         .uart_tx_o                (uart_tx_o),
-        .uart_intr_tx_watermark_o (),
-        .uart_intr_rx_watermark_o (),
-        .uart_intr_tx_empty_o     (),
-        .uart_intr_rx_overflow_o  (),
-        .uart_intr_rx_frame_err_o (),
-        .uart_intr_rx_break_err_o (),
-        .uart_intr_rx_timeout_o   (),
-        .uart_intr_rx_parity_err_o()
+        .uart_intr_tx_watermark_o (uart_intr_tx_watermark),
+        .uart_intr_rx_watermark_o (uart_intr_rx_watermark),
+        .uart_intr_tx_empty_o     (uart_intr_tx_empty),
+        .uart_intr_rx_overflow_o  (uart_intr_rx_overflow),
+        .uart_intr_rx_frame_err_o (uart_intr_rx_frame_err),
+        .uart_intr_rx_break_err_o (uart_intr_rx_break_err),
+        .uart_intr_rx_timeout_o   (uart_intr_rx_timeout),
+        .uart_intr_rx_parity_err_o(uart_intr_rx_parity_err)
+    );
+
+    always_comb begin
+        intr_vector = '0;
+        for (int unsigned i = 0; i < NEXT_INT; i++) begin
+            intr_vector[PLIC_USED_NINT+i] = ext_intr_i[i];
+        end
+        intr_vector[9] = pm_wakeup_timer_irq;
+        intr_vector[1] = uart_intr_tx_watermark;
+        intr_vector[2] = uart_intr_rx_watermark;
+        intr_vector[3] = uart_intr_tx_empty;
+        intr_vector[4] = uart_intr_rx_overflow;
+        intr_vector[5] = uart_intr_rx_frame_err;
+        intr_vector[6] = uart_intr_rx_break_err;
+        intr_vector[7] = uart_intr_rx_timeout;
+        intr_vector[8] = uart_intr_rx_parity_err;
+    end
+
+    rv_plic_subsystem u_rv_plic_subsystem (
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .reg_req_i (reg_req_sig[RV_PLIC_REG_IDX]),
+        .reg_rsp_o (reg_rsp_sig[RV_PLIC_REG_IDX]),
+        .intr_src_i(intr_vector),
+        .irq_o     (plic_irq),
+        .msip_o    (plic_msip)
+    );
+
+    rv_timer_subsystem u_rv_timer_subsystem (
+        .clk_i      (clk_i),
+        .rst_ni     (rst_ni),
+        .reg_req_i  (reg_req_sig[RV_TIMER_REG_IDX]),
+        .reg_rsp_o  (reg_rsp_sig[RV_TIMER_REG_IDX]),
+        .timer_irq_o(timer_irq)
     );
 
     debug_subsystem u_debug_subsystem (
@@ -306,31 +497,6 @@ module core_v_mcu (
         .dbg_active_o (),
         .dbg_req_o    (debug_req),
         .ndmreset_o   (ndmreset)
-    );
-
-    power_manager_subsystem #(
-        .reg_req_t(core_v_mcu_pkg::reg_req_t),
-        .reg_rsp_t(core_v_mcu_pkg::reg_rsp_t)
-    ) u_power_manager_subsystem (
-        .clk_i      (clk_i),
-        .rst_ni     (rst_ni),
-        // Bus Interface
-        .reg_req_i  (reg_req_sig[POWER_MANAGER_REG_IDX]),
-        .reg_rsp_o  (reg_rsp_sig[POWER_MANAGER_REG_IDX]),
-        // Status & Interrupts
-        .core_sleep_i (1'b0), // CONNECT TO CPU SLEEP SIGNAL
-        .intr_i       ('0),   // CONNECT
-        .ext_irq_i    ('0),   // CONNECT
-        // Power Control Routing
-        .cpu_subsystem_pwr_ctrl_o        (cpu_subsystem_pwr_ctrl),
-        .peripheral_subsystem_pwr_ctrl_o (peripheral_subsystem_pwr_ctrl),
-        .memory_subsystem_pwr_ctrl_o     (memory_subsystem_pwr_ctrl),
-        .external_subsystem_pwr_ctrl_o   (external_subsystem_pwr_ctrl),
-        .dma_subsystem_pwr_ctrl_o        (dma_subsystem_pwr_ctrl),
-        .cpu_subsystem_pwr_ctrl_i        (cpu_subsystem_pwr_ctrl_ack),
-        .peripheral_subsystem_pwr_ctrl_i (peripheral_subsystem_pwr_ctrl_ack),
-        .memory_subsystem_pwr_ctrl_i     (memory_subsystem_pwr_ctrl_ack),
-        .external_subsystem_pwr_ctrl_i   (external_subsystem_pwr_ctrl_ack)
     );
 
 endmodule

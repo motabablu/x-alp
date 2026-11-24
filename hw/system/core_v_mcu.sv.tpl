@@ -10,6 +10,31 @@
     peripherals = [peripheral.get_name() for peripheral in xalp.get_peripherals()]
     masters = [master.get_name() for master in xalp.bus().get_masters()]
     slaves = [slave.get_name() for slave in xalp.bus().get_slaves()]
+    interrupts = xalp.get_interrupts()
+    pm = xalp.get_power_manager()
+    cpu_name = xalp.cpu().get_name() + "_0"
+
+    def clk(name):
+        return pm.clk_of(name) if pm else "clk_i"
+
+    # AXI ports of the blocks: (direction, type, ID width, crossbar side req, rsp).
+    # In a power domain they sit behind an axi_isolate, so the block is never
+    # stopped in the middle of a handshake.
+    axi_ports = {
+        cpu_name: [("out", "axi_mst", "AxiMstIdWidth", "axi_master_req_sig[CPU_M_BUS_IDX]", "axi_master_rsp_sig[CPU_M_BUS_IDX]")],
+        "axi_llc": [("in", "axi_slv", "AxiSlvIdWidth", "axi_slave_req_sig[LLC_S_BUS_IDX]", "axi_slave_rsp_sig[LLC_S_BUS_IDX]"),
+                    ("out", "axi_llc", "AxiLlcIdWidth", "ext_llc_req_o", "ext_llc_rsp_i")],
+    }
+
+    def axi(name, k):
+        _, _, _, req, rsp = axi_ports[name][k]
+        if pm and pm.pd_of(name) is not None:
+            return f"{name}_axi{k}_req", f"{name}_axi{k}_rsp"
+        return req, rsp
+
+    def pd_rst(name):
+        pd = pm.pd_of(name) if pm else None
+        return "" if pd is None else f" & pd_pwr_ctrl[{pd}].rst_n & pwr_ok_{name}"
 %>
 module core_v_mcu (
 
@@ -50,7 +75,14 @@ module core_v_mcu (
 
     // Exit interface
     output logic        exit_valid_o,
-    output logic [31:0] exit_value_o
+    output logic [31:0] exit_value_o,
+
+    // External interrupts (PLIC sources EXT_INTR_*)
+    input logic [core_v_mcu_pkg::NEXT_INT_RND-1:0] ext_intr_i,
+
+    // External power domains: power switches, isolation and retention
+    output power_manager_pkg::power_manager_out_t [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] ext_pwr_ctrl_o,
+    input  power_manager_pkg::power_manager_in_t  [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] ext_pwr_ack_i
 
 );
 
@@ -68,8 +100,16 @@ module core_v_mcu (
     reg_req_t     [ totalRegSlaves-1:0] reg_req_sig;
     reg_rsp_t     [ totalRegSlaves-1:0] reg_rsp_sig;
 
-    logic         [               15:0] fast_intr;
-    logic         [               15:0] fast_irq;
+    // Interrupts
+    logic         [     PLIC_NINT-1:0] intr_vector;
+    logic                               plic_irq;
+    logic                               plic_msip;
+    logic         [               1:0] timer_irq;
+
+    // Power manager
+    logic         [     NUM_CORES-1:0] core_sleep;
+    logic                               pm_wakeup_timer_irq;
+    logic         [    NUM_CG_RND-1:0] cg_en;
 
     logic                               debug_req;
     logic                               debug_req_sync;
@@ -94,6 +134,135 @@ module core_v_mcu (
     assign debug_req_sync = debug_req_sync_reg[1];
     assign ndmreset_sync  = ndmreset_sync_reg[1];
 
+    power_manager_pkg::power_manager_out_t [NUM_PD_RND-1:0] pd_pwr_ctrl;
+    power_manager_pkg::power_manager_in_t  [NUM_PD_RND-1:0] pd_pwr_ack;
+    logic                                  [NUM_PD_RND-1:0] pd_isolate;
+    logic                                  [NUM_PD_RND-1:0] pd_isolated;
+
+    logic [NUM_CORES-1:0] core_wfi, core_idle;
+    assign core_sleep = core_wfi & core_idle;
+
+    axi_idle_monitor #(
+        .req_t(axi_mst_req_t),
+        .rsp_t(axi_mst_rsp_t)
+    ) u_axi_idle_${cpu_name} (
+        .clk_i (clk_i),
+        .rst_ni(rst_ni),
+        .req_i (axi_master_req_sig[CPU_M_BUS_IDX]),
+        .rsp_i (axi_master_rsp_sig[CPU_M_BUS_IDX]),
+        .idle_o(core_idle[0])
+    );
+
+% if pm:
+<%
+    pds = pm.get_power_domains()
+    ext_pds = [i for i, pd in enumerate(pds) if not pd.blocks]
+    isolated = {}
+%>\
+  % for b in pm.get_gated_blocks():
+<%
+    name = b["name"]
+    en = []
+    if b["cg"] is not None:
+        en.append(f"cg_en[{b['cg']}]")
+    if b["pd"] is not None:
+        en.append(f"pd_pwr_ctrl[{b['pd']}].clkgate_en_n")
+%>\
+    // ${name}
+    logic clk_${name};
+    clock_gate_wrapper u_clock_gate_${name} (
+        .clk_i    (clk_i),
+        .en_i     (${" & ".join(en)}),
+        .test_en_i(test_mode_i),
+        .clk_o    (clk_${name})
+    );
+    % if b["pd"] is not None:
+    logic pwr_ok_${name}, pwr_ack_${name};
+    power_switch_wrapper u_power_switch_${name} (
+        .clk_i        (clk_i),
+        .rst_ni       (rst_ni),
+        .switch_en_ni (pd_pwr_ctrl[${b["pd"]}].pwrgate_en_n),
+        .switch_ack_no(pwr_ack_${name}),
+        .pwr_ok_o     (pwr_ok_${name})
+    );
+      % for k, (d, t, w, req, rsp) in enumerate(axi_ports.get(name, [])):
+<%
+    isolated.setdefault(b["pd"], []).append(f"isolated_{name}_{k}")
+    blk_req, blk_rsp = axi(name, k)
+    slv_req, slv_rsp = (blk_req, blk_rsp) if d == "out" else (req, rsp)
+    mst_req, mst_rsp = (req, rsp) if d == "out" else (blk_req, blk_rsp)
+%>\
+    ${t}_req_t ${blk_req};
+    ${t}_rsp_t ${blk_rsp};
+    logic isolated_${name}_${k};
+    axi_isolate #(
+        .NumPending          (16),
+        .TerminateTransaction(1'b0),
+        .AtopSupport         (1'b1),
+        .AxiAddrWidth        (AxiAddrWidth),
+        .AxiDataWidth        (AxiDataWidth),
+        .AxiIdWidth          (${w}),
+        .AxiUserWidth        (AxiUserWidth),
+        .axi_req_t           (${t}_req_t),
+        .axi_resp_t          (${t}_rsp_t)
+    ) u_axi_isolate_${name}_${k} (
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .slv_req_i (${slv_req}),
+        .slv_resp_o(${slv_rsp}),
+        .mst_req_o (${mst_req}),
+        .mst_resp_i(${mst_rsp}),
+        .isolate_i (pd_isolate[${b["pd"]}]),
+        .isolated_o(isolated_${name}_${k})
+    );
+      % endfor
+    % endif
+
+  % endfor
+    // Power domain ack (all its switches closed) and bus isolation
+  % for i, pd in enumerate(pds):
+    % if pd.blocks:
+    assign pd_pwr_ack[${i}].pwrgate_ack_n = ${" & ".join("pwr_ack_" + n for n in pd.blocks)};
+    assign pd_isolated[${i}] = ${" & ".join(isolated.get(i, [])) or "1'b1"};
+    % else:
+    assign ext_pwr_ctrl_o[${ext_pds.index(i)}] = pd_pwr_ctrl[${i}];
+    assign pd_pwr_ack[${i}] = ext_pwr_ack_i[${ext_pds.index(i)}];
+    assign pd_isolated[${i}] = 1'b1;
+    % endif
+  % endfor
+  % if not pds:
+    assign pd_pwr_ack = '1;
+    assign pd_isolated = '1;
+  % endif
+  % if not ext_pds:
+    assign ext_pwr_ctrl_o = '{default: power_manager_pkg::PD_ON};
+  % endif
+
+    power_manager #(
+        .reg_req_t(reg_req_t),
+        .reg_rsp_t(reg_rsp_t)
+    ) u_power_manager (
+        .clk_i             (clk_i),
+        .rst_ni            (rst_ni),
+        .reg_req_i         (reg_req_sig[POWER_MANAGER_REG_IDX]),
+        .reg_rsp_o         (reg_rsp_sig[POWER_MANAGER_REG_IDX]),
+        .core_sleep_i      (core_sleep),
+        .debug_req_i       (debug_req_sync),
+        .wake_src_i        (intr_vector),
+        .wakeup_timer_irq_o(pm_wakeup_timer_irq),
+        .pd_pwr_ctrl_o     (pd_pwr_ctrl),
+        .pd_pwr_ack_i      (pd_pwr_ack),
+        .pd_isolate_o      (pd_isolate),
+        .pd_isolated_i     (pd_isolated),
+        .cg_en_o           (cg_en)
+    );
+% else:
+    assign pd_pwr_ctrl         = '{default: power_manager_pkg::PD_ON};
+    assign ext_pwr_ctrl_o      = '{default: power_manager_pkg::PD_ON};
+    assign pm_wakeup_timer_irq = 1'b0;
+    assign cg_en               = '1;
+% endif
+
     //
     //       █████████  ███████████  █████  █████
     //      ███░░░░░███░░███░░░░░███░░███  ░░███ 
@@ -105,23 +274,24 @@ module core_v_mcu (
     //      ░░░░░░░░░  ░░░░░          ░░░░░░░░   
     //
 
-    // CPU reset: system reset OR debug module reset (active high)
-    assign cpu_rst_n      = rst_ni & ~ndmreset_sync;
+    assign cpu_rst_n      = rst_ni & ~ndmreset_sync${pd_rst(cpu_name)};
 
     cpu_subsystem u_cpu_subsystem (
-        .clk_i      (clk_i),
+        .clk_i      (${clk(cpu_name)}),
         .rst_ni     (cpu_rst_n),
         .boot_addr_i(BOOT_ADDR),
 
         // .cvxif_resp_o (),
         // .cvxif_req_i('0),
 
-        .bus_req_o(axi_master_req_sig[CPU_M_BUS_IDX]),
-        .bus_rsp_i(axi_master_rsp_sig[CPU_M_BUS_IDX]),
+        .bus_req_o(${axi(cpu_name, 0)[0]}),
+        .bus_rsp_i(${axi(cpu_name, 0)[1]}),
 
-        .irq_i      (fast_irq[1:0]),
-        .time_irq_i ('0),
-        .debug_req_i(debug_req_sync)
+        .irq_i       ({1'b0, plic_irq}),  // {SEIP, MEIP}
+        .ipi_i       (plic_msip),
+        .time_irq_i  (timer_irq[0]),
+        .debug_req_i (debug_req_sync),
+        .core_sleep_o(core_wfi[0])
     );
 
     // 
@@ -157,13 +327,13 @@ module core_v_mcu (
         .mst_resp_t(axi_llc_rsp_t),
         .rule_full_t(rule_t)
     ) u_axi_llc (
-        .clk_i(clk_i),
-        .rst_ni(rst_ni),
+        .clk_i(${clk("axi_llc")}),
+        .rst_ni(rst_ni${pd_rst("axi_llc")}),
         .test_i('0),
-        .slv_req_i(axi_slave_req_sig[LLC_S_BUS_IDX]),
-        .slv_resp_o(axi_slave_rsp_sig[LLC_S_BUS_IDX]),
-        .mst_req_o(ext_llc_req_o),
-        .mst_resp_i(ext_llc_rsp_i),
+        .slv_req_i(${axi("axi_llc", 0)[0]}),
+        .slv_resp_o(${axi("axi_llc", 0)[1]}),
+        .mst_req_o(${axi("axi_llc", 1)[0]}),
+        .mst_resp_i(${axi("axi_llc", 1)[1]}),
         .conf_req_i(reg_req_sig[AXI_LLC_REG_IDX]),
         .conf_resp_o(reg_rsp_sig[AXI_LLC_REG_IDX]),
         // The LLC re-decodes what the crossbar already routed to it, so these
@@ -256,42 +426,70 @@ module core_v_mcu (
     );
 % endif
 
-    assign fast_intr = '0;  // No external fast interrupts for now
-
-% if "fast_intr_ctrl" in peripherals:
-    fast_intr_ctrl #(
-        .reg_req_t(reg_req_t),
-        .reg_rsp_t(reg_rsp_t)
-    ) u_fast_intr_ctrl (
-        .clk_i (clk_i),
-        .rst_ni(rst_ni),
-
-        // Bus Interface
-        .reg_req_i(reg_req_sig[FAST_INTR_CTRL_REG_IDX]),
-        .reg_rsp_o(reg_rsp_sig[FAST_INTR_CTRL_REG_IDX]),
-
-        .fast_intr_i(fast_intr),
-        .fast_intr_o(fast_irq)
-    );
-% endif
-
 % if "uart" in peripherals:
+<%
+    uart_irqs = ["tx_watermark", "rx_watermark", "tx_empty", "rx_overflow",
+                 "rx_frame_err", "rx_break_err", "rx_timeout", "rx_parity_err"]
+%>\
+% for irq in uart_irqs:
+    logic uart_intr_${irq};
+% endfor
+
     uart_subsystem u_uart_subsystem (
-        .clk_i                    (clk_i),
-        .rst_ni                   (rst_ni),
+        .clk_i                    (${clk("uart")}),
+        .rst_ni                   (rst_ni${pd_rst("uart")}),
         .uart_reg_req             (reg_req_sig[UART_REG_IDX]),
         .uart_reg_rsp             (reg_rsp_sig[UART_REG_IDX]),
         .uart_rx_i                (uart_rx_i),
         .uart_tx_o                (uart_tx_o),
-        .uart_intr_tx_watermark_o (),
-        .uart_intr_rx_watermark_o (),
-        .uart_intr_tx_empty_o     (),
-        .uart_intr_rx_overflow_o  (),
-        .uart_intr_rx_frame_err_o (),
-        .uart_intr_rx_break_err_o (),
-        .uart_intr_rx_timeout_o   (),
-        .uart_intr_rx_parity_err_o()
+% for irq in uart_irqs:
+        .uart_intr_${irq}_o${" " * (13 - len(irq))}(uart_intr_${irq})${"" if loop.last else ","}
+% endfor
     );
+% endif
+
+    always_comb begin
+        intr_vector = '0;
+        for (int unsigned i = 0; i < NEXT_INT; i++) begin
+            intr_vector[PLIC_USED_NINT+i] = ext_intr_i[i];
+        end
+% if interrupts and interrupts.get_interrupt("power_manager_wakeup_timer") is not None:
+        intr_vector[${interrupts.get_interrupt("power_manager_wakeup_timer")}] = pm_wakeup_timer_irq;
+% endif
+% if interrupts and "uart" in peripherals:
+  % for irq in uart_irqs:
+    % if interrupts.get_interrupt("uart_intr_" + irq) is not None:
+        intr_vector[${interrupts.get_interrupt("uart_intr_" + irq)}] = uart_intr_${irq};
+    % endif
+  % endfor
+% endif
+    end
+
+% if "rv_plic" in peripherals:
+    rv_plic_subsystem u_rv_plic_subsystem (
+        .clk_i       (${clk("rv_plic")}),
+        .rst_ni      (rst_ni${pd_rst("rv_plic")}),
+        .reg_req_i   (reg_req_sig[RV_PLIC_REG_IDX]),
+        .reg_rsp_o   (reg_rsp_sig[RV_PLIC_REG_IDX]),
+        .intr_src_i  (intr_vector),
+        .irq_o       (plic_irq),
+        .msip_o      (plic_msip)
+    );
+% else:
+    assign plic_irq  = 1'b0;
+    assign plic_msip = 1'b0;
+% endif
+
+% if "rv_timer" in peripherals:
+    rv_timer_subsystem u_rv_timer_subsystem (
+        .clk_i                 (${clk("rv_timer")}),
+        .rst_ni                (rst_ni${pd_rst("rv_timer")}),
+        .reg_req_i             (reg_req_sig[RV_TIMER_REG_IDX]),
+        .reg_rsp_o             (reg_rsp_sig[RV_TIMER_REG_IDX]),
+        .timer_irq_o           (timer_irq)
+    );
+% else:
+    assign timer_irq = '0;
 % endif
 
 % if "debug_module" in masters :
