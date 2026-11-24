@@ -10,6 +10,9 @@
     rev: "7327dd9f83deb1fa166f78e5453993359f7d2087",
   },
 
+  // Local changes for X-ALP: power manager domains/clock gates, interrupts
+  patch_dir: "patches/xheep_gen",
+
   exclude_from_upstream: [
     ".gitignore"
     ".github"
