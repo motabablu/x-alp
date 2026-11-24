@@ -103,31 +103,42 @@ module testharness #(
     assign clk   = clk_i;
     assign rst_n = rst_ni;
 
+    // External power domains: ideal power switches, the ack follows the switch
+    power_manager_pkg::power_manager_out_t [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] pwr_ctrl;
+    power_manager_pkg::power_manager_in_t  [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] pwr_ack;
+
+    for (genvar i = 0; i < core_v_mcu_pkg::NUM_EXT_PD_RND; i++) begin : gen_pwr_ack
+        assign pwr_ack[i].pwrgate_ack_n = pwr_ctrl[i].pwrgate_en_n;
+    end
+
     //----
     // DUT
     //----
     x_alp u_x_alp (
-        .clk_i        (clk),
-        .rst_ni       (rst_n),
-        .uart_tx_o    (uart_tx),
-        .uart_rx_i    (uart_rx),
-        .exit_valid_o (exit_valid_o),
-        .exit_value_o (exit_value_o),
-        .jtag_tck_i   (jtag_tck),
-        .jtag_tms_i   (jtag_tms),
-        .jtag_trst_ni (jtag_trst_n),
-        .jtag_tdi_i   (jtag_tdi),
-        .jtag_tdo_o   (jtag_tdo),
-        .jtag_tdo_oe_o(),
-        .ext_slv_req_o(ext_slv_req),
-        .ext_slv_rsp_i(ext_slv_rsp),
-        .ext_mst_req_i('0),
-        .ext_mst_rsp_o(),
-        .ext_reg_req_o(),
-        .ext_reg_rsp_i('0),
-        .test_mode_i  (1'b0),
-        .ext_llc_req_o(ext_llc_req),
-        .ext_llc_rsp_i(ext_llc_rsp)
+        .clk_i         (clk),
+        .rst_ni        (rst_n),
+        .uart_tx_o     (uart_tx),
+        .uart_rx_i     (uart_rx),
+        .exit_valid_o  (exit_valid_o),
+        .exit_value_o  (exit_value_o),
+        .jtag_tck_i    (jtag_tck),
+        .jtag_tms_i    (jtag_tms),
+        .jtag_trst_ni  (jtag_trst_n),
+        .jtag_tdi_i    (jtag_tdi),
+        .jtag_tdo_o    (jtag_tdo),
+        .jtag_tdo_oe_o (),
+        .ext_slv_req_o (ext_slv_req),
+        .ext_slv_rsp_i (ext_slv_rsp),
+        .ext_mst_req_i ('0),
+        .ext_mst_rsp_o (),
+        .ext_reg_req_o (),
+        .ext_reg_rsp_i ('0),
+        .test_mode_i   (1'b0),
+        .ext_llc_req_o (ext_llc_req),
+        .ext_llc_rsp_i (ext_llc_rsp),
+        .ext_intr_i    ('0),
+        .ext_pwr_ctrl_o(pwr_ctrl),
+        .ext_pwr_ack_i (pwr_ack)
     );
 
     // ----
