@@ -12,6 +12,8 @@ from cpu.cpu import CPU
 from memory_ss.memory_ss import MemorySS
 from peripherals.peripheral_domain import PeripheralDomain
 from peripherals.base_peripherals.llc import LLC
+from peripherals.base_peripherals.Power_manager import Power_manager
+from interrupts.interrupts import Interrupts
 from system import System
 from bus_type import BusType
 
@@ -40,11 +42,13 @@ class XAlp(System):
     AVAILABLE_PERIPHERALS = [
         "bootrom",
         "ext_peripheral",
-        "fast_intr_ctrl",
         "pad_control",
         "soc_ctrl",
         "uart",
         "axi_llc",
+        "power_manager",
+        "rv_plic",
+        "rv_timer",
     ]
     """Constant list of peripheral names available for X-ALP."""
 
@@ -58,6 +62,7 @@ class XAlp(System):
         super().__init__()
         self._platform_name = platform_name
         self._bus = None
+        self._interrupts = None
 
     def platform_name(self) -> str:
         """
@@ -80,6 +85,53 @@ class XAlp(System):
         """
         super().build()
         self._bus = self._derive_bus()
+        if self._interrupts:
+            self._interrupts.build()
+        # Resolve on the original objects: get_peripherals() returns deep copies.
+        originals = [p for d in self._domains for p in d._peripherals]
+        for pm in [p for p in originals if isinstance(p, Power_manager)]:
+            pm.build([self.cpu()] if self.cpu() else [], originals)
+
+    def validate(self):
+        """
+        Does the generic checks and requires interrupts when a PLIC is present.
+        """
+        super().validate()
+        if "rv_plic" in self.get_configured_peripheral_names() and not self._interrupts:
+            raise RuntimeError("[MCU-GEN] ERROR: rv_plic requires interrupts to be configured")
+        return True
+
+    # ------------------------------------------------------------
+    # Interrupts
+    # ------------------------------------------------------------
+
+    def set_interrupts(self, interrupts: Interrupts):
+        """
+        Sets the interrupts of the system (PLIC sources).
+
+        :param Interrupts interrupts: The interrupts to set.
+        :raise TypeError: when interrupts is of incorrect type.
+        """
+        if not isinstance(interrupts, Interrupts):
+            raise TypeError(
+                f"XAlp.interrupts should be of type Interrupts not {type(interrupts)}"
+            )
+        self._interrupts = interrupts
+
+    def get_interrupts(self) -> Interrupts:
+        """
+        :return: the configured interrupts, `None` when not set.
+        :rtype: Interrupts
+        """
+        return self._interrupts
+
+    def get_power_manager(self) -> Power_manager:
+        """
+        :return: the power manager, `None` when not configured.
+        :rtype: Power_manager
+        """
+        pms = [p for p in self.get_peripherals() if isinstance(p, Power_manager)]
+        return pms[0] if pms else None
 
     # ------------------------------------------------------------
     # Bus derivation
