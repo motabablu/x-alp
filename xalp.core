@@ -18,6 +18,7 @@ filesets:
     files:
     - hw/target/fpga/xilinx_core_v_mcu_wrapper.sv
     - hw/target/fpga/xheep_fpga_support/rtl/prim_xilinx_clk.sv
+    - hw/target/fpga/pm_cells_xilinx.sv
     - hw/target/fpga/xheep_fpga_support/rtl/pad_cell_input_xilinx.sv
     - hw/target/fpga/xheep_fpga_support/rtl/pad_cell_output_xilinx.sv
     - hw/target/fpga/xheep_fpga_support/rtl/pad_cell_inout_xilinx.sv

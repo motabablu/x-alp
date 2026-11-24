@@ -23,13 +23,18 @@ hw/include/core_v_mcu_pkg.sv
 hw/ip/pad_ring/pad_ring.sv
 hw/ip/pad_control/rtl/pad_control.sv
 hw/ip/pad_control/data/pad_control.hjson
+hw/ip/power_manager/rtl/power_manager.sv
+hw/ip/power_manager/data/power_manager.hjson
 
 # reg-gen outputs (regtool RTL + SW headers)
-hw/ip/fast_intr_ctrl/rtl/fast_intr_ctrl_reg_top.sv
-hw/ip/fast_intr_ctrl/rtl/fast_intr_ctrl_reg_pkg.sv
-sw/device/lib/drivers/fast_intr_ctrl/fast_intr_ctrl_regs.h
-sw/device/lib/drivers/fast_intr_ctrl/fast_intr_ctrl_structs.h
-sw/device/lib/drivers/fast_intr_ctrl/fast_intr_ctrl_regs.md
+hw/ip/power_manager/rtl/power_manager_reg_top.sv
+hw/ip/power_manager/rtl/power_manager_reg_pkg.sv
+sw/device/lib/drivers/power_manager/power_manager_regs.h
+sw/device/lib/drivers/power_manager/power_manager_regs.md
+sw/device/lib/drivers/rv_plic/rv_plic_regs.h
+sw/device/lib/drivers/rv_timer/rv_timer_regs.h
+sw/device/lib/sdk/cpu/cpu_sdk.h
+sw/device/lib/sdk/power_manager/power_manager_sdk.h
 hw/ip/soc_ctrl/rtl/soc_ctrl_reg_top.sv
 hw/ip/soc_ctrl/rtl/soc_ctrl_reg_pkg.sv
 sw/device/lib/drivers/soc_ctrl/soc_ctrl_regs.h
