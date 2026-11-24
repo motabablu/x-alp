@@ -11,6 +11,7 @@
 #include "core_v_mcu.h"
 #include "soc_ctrl_regs.h"
 #include "axi_llc_regs.h"
+#include "power_manager_regs.h"
 
 #define SOC_CTRL_START_ADDRESS_20bit (SOC_CTRL_BASE_ADDRESS >> 12)
 
@@ -53,6 +54,25 @@ _start:
 
 // Reset regs, full fence, then jump to main
 _boot:
+#ifdef POWER_MANAGER_BASE_ADDRESS
+    // Woken up from power off? Then resume where this hart left: the power
+    // manager driver set WAKEUP_STATE and RESTORE_ADDR (12 bytes per hart).
+    csrr t0, mhartid
+    slli t1, t0, 3
+    slli t0, t0, 2
+    add  t0, t0, t1
+    li   t1, POWER_MANAGER_BASE_ADDRESS
+    add  t1, t1, t0
+    lw   t2, POWER_MANAGER_WAKEUP_STATE_0_REG_OFFSET(t1)
+    beqz t2, _boot_cold
+    lwu  t2, POWER_MANAGER_RESTORE_ADDR_LO_0_REG_OFFSET(t1)
+    lwu  t3, POWER_MANAGER_RESTORE_ADDR_HI_0_REG_OFFSET(t1)
+    slli t3, t3, 32
+    or   t2, t2, t3
+    fence.i
+    jr   t2
+_boot_cold:
+#endif
     li t0, 0
     li t1, 0
     fence
