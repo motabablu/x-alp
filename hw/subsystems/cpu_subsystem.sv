@@ -24,13 +24,15 @@ module cpu_subsystem (
 
     // Level sensitive (async) interrupts
     input logic [1:0] irq_i,
+    // Inter-processor (async) interrupt
+    input logic       ipi_i,
     // Timer (async) interrupt
     input logic       time_irq_i,
     // Debug (async) request
     input logic       debug_req_i,
-    
+
     // Core sleep signal (WFI)
-    output logic      core_sleep_o
+    output logic core_sleep_o
 );
 
     /* verilator lint_off PINCONNECTEMPTY */
@@ -50,7 +52,7 @@ module cpu_subsystem (
         // Level sensitive (async) interrupts
         .irq_i        (irq_i),
         // Inter-processor (async) interrupt
-        .ipi_i        ('0),
+        .ipi_i        (ipi_i),
         // Timer (async) interrupt
         .time_irq_i   (time_irq_i),
         // Debug (async) request
@@ -65,8 +67,7 @@ module cpu_subsystem (
         .noc_req_o    (bus_req_o),
         // noc response, can be AXI or OpenPiton
         .noc_resp_i   (bus_rsp_i),
-        
-        // Sleep signal
+        // Core waiting for interrupt (WFI)
         .core_sleep_o (core_sleep_o)
     );
 
