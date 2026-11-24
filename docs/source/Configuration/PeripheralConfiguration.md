@@ -22,8 +22,10 @@ X-ALP supports the peripherals listed in {py:attr}`~xheep_gen.xalp.XAlp.AVAILABL
 |------|-------|-----------|-------------|
 | `soc_ctrl` | `SOC_ctrl` | yes | SoC controller: boot address, boot handshake and exit value |
 | `bootrom` | `Bootrom` | yes | Boot ROM |
-| `fast_intr_ctrl` | `Fast_intr_ctrl` | no | Fast interrupt controller |
 | `uart` | `UART` | no | OpenTitan UART |
+| `rv_plic` | `RV_plic` | no | OpenTitan PLIC, interrupt controller (needs `set_interrupts`) |
+| `rv_timer` | `RV_timer` | no | OpenTitan timer, machine timer interrupt |
+| `power_manager` | `Power_manager` | no | Power and clock gating, see [Peripherals](../Peripherals/index.md) |
 | `axi_llc` | `LLC` | no | Configuration registers of the last-level cache |
 | `ext_peripheral` | `Ext_peripheral` | no | Register-interface port for a peripheral outside X-ALP |
 | `pad_control` | `Pad_control` | no | Pad control registers |
