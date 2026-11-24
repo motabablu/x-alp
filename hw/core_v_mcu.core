@@ -11,6 +11,8 @@ filesets:
       - subsystems/bus_subsystem.sv
       - subsystems/bootrom_subsystem.sv
       - subsystems/uart_subsystem.sv
+      - subsystems/rv_plic_subsystem.sv
+      - subsystems/rv_timer_subsystem.sv
       - subsystems/debug_subsystem.sv
 
   files_rtl:
@@ -30,12 +32,14 @@ filesets:
       - pulp-platform.org::reg_to_axi
       - openhwgroup.org::cva6:1.4.0
       - lowrisc:ip:uart
+      - lowrisc:ip:rv_plic_example
+      - lowrisc:ip:rv_timer
   
   ip_modules:
     depend:
       - x-alp:ip:boot_rom
       - x-heep:ip:soc_ctrl
-      - x-heep:ip:fast_intr_ctrl
+      - x-alp:ip:power_manager
       - x-heep:ip:pad_ring
       - x-heep:ip:pad_control
 
@@ -43,6 +47,7 @@ filesets:
     depend:
       - x-heep:sim:pad_cells
       - x-heep:sim:sram_wrapper
+      - x-alp:sim:pm_cells
 
   waivers:
     file_type: vlt
