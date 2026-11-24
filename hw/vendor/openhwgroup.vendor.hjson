@@ -50,6 +50,8 @@
       rev: "89986dfe867dada9752eee19a4ed4a9d274484a6",
     },
 
+    patch_dir: "patches/openhwgroup/cva6",
+
     exclude_from_upstream: [
       ".github",
       ".gitlab-ci",

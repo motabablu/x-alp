@@ -1,0 +1,23 @@
+diff --git a/core/cva6.sv b/core/cva6.sv
+index 3987faf..2c476a5 100644
+--- a/core/cva6.sv
++++ b/core/cva6.sv
+@@ -335,7 +335,9 @@ module cva6
+     // noc request, can be AXI or OpenPiton - SUBSYSTEM
+     output noc_req_t noc_req_o,
+     // noc response, can be AXI or OpenPiton - SUBSYSTEM
+-    input noc_resp_t noc_resp_i
++    input noc_resp_t noc_resp_i,
++    // Core waiting for interrupt (WFI) - SUBSYSTEM
++    output logic core_sleep_o
+ );
+ 
+   localparam type interrupts_t = struct packed {
+@@ -628,6 +630,7 @@ module cva6
+   logic halt_ctrl;
+   logic halt_frontend;
+   logic halt_csr_ctrl;
++  assign core_sleep_o = halt_csr_ctrl;
+   logic dcache_flush_ctrl_cache;
+   logic dcache_flush_ack_cache_ctrl;
+   logic set_debug_pc;
