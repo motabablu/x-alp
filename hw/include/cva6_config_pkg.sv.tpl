@@ -163,23 +163,24 @@ package cva6_config_pkg;
         PMPEntryReadOnly: 64'd0,
         PMPNapotEn: bit'(1),
         NOCType: config_pkg::NOC_TYPE_AXI4_ATOP,
-        NrNonIdempotentRules: unsigned'(4),
+<%
+    non_idempotent = [r["macro"] for r in xalp.bus().get_reg_slaves() if r["name"] != "bootrom"]
+%>\
+        NrNonIdempotentRules: unsigned'(${len(non_idempotent)}),
         NonIdempotentAddrBase:
         1024'(
         {
-            core_v_mcu_pkg::SOC_CTRL_REG_BASE_ADDR,
-            core_v_mcu_pkg::FAST_INTR_CTRL_REG_BASE_ADDR,
-            core_v_mcu_pkg::UART_REG_BASE_ADDR,
-            core_v_mcu_pkg::EXT_PERIPHERAL_REG_BASE_ADDR
+% for m in non_idempotent:
+            core_v_mcu_pkg::${m}_REG_BASE_ADDR${"" if loop.last else ","}
+% endfor
         }
         ),
         NonIdempotentLength:
         1024'(
         {
-            core_v_mcu_pkg::SOC_CTRL_REG_SIZE,
-            core_v_mcu_pkg::FAST_INTR_CTRL_REG_SIZE,
-            core_v_mcu_pkg::UART_REG_SIZE,
-            core_v_mcu_pkg::EXT_PERIPHERAL_REG_SIZE
+% for m in non_idempotent:
+            core_v_mcu_pkg::${m}_REG_SIZE${"" if loop.last else ","}
+% endfor
         }
         ),
         NrExecuteRegionRules: unsigned'(${2 + len(linker_sections)}),

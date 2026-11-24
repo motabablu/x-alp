@@ -160,23 +160,29 @@ package cva6_config_pkg;
         PMPEntryReadOnly: 64'd0,
         PMPNapotEn: bit'(1),
         NOCType: config_pkg::NOC_TYPE_AXI4_ATOP,
-        NrNonIdempotentRules: unsigned'(4),
+        NrNonIdempotentRules: unsigned'(7),
         NonIdempotentAddrBase:
         1024'(
         {
             core_v_mcu_pkg::SOC_CTRL_REG_BASE_ADDR,
-            core_v_mcu_pkg::FAST_INTR_CTRL_REG_BASE_ADDR,
+            core_v_mcu_pkg::EXT_PERIPHERAL_REG_BASE_ADDR,
             core_v_mcu_pkg::UART_REG_BASE_ADDR,
-            core_v_mcu_pkg::EXT_PERIPHERAL_REG_BASE_ADDR
+            core_v_mcu_pkg::RV_PLIC_REG_BASE_ADDR,
+            core_v_mcu_pkg::RV_TIMER_REG_BASE_ADDR,
+            core_v_mcu_pkg::POWER_MANAGER_REG_BASE_ADDR,
+            core_v_mcu_pkg::AXI_LLC_REG_BASE_ADDR
         }
         ),
         NonIdempotentLength:
         1024'(
         {
             core_v_mcu_pkg::SOC_CTRL_REG_SIZE,
-            core_v_mcu_pkg::FAST_INTR_CTRL_REG_SIZE,
+            core_v_mcu_pkg::EXT_PERIPHERAL_REG_SIZE,
             core_v_mcu_pkg::UART_REG_SIZE,
-            core_v_mcu_pkg::EXT_PERIPHERAL_REG_SIZE
+            core_v_mcu_pkg::RV_PLIC_REG_SIZE,
+            core_v_mcu_pkg::RV_TIMER_REG_SIZE,
+            core_v_mcu_pkg::POWER_MANAGER_REG_SIZE,
+            core_v_mcu_pkg::AXI_LLC_REG_SIZE
         }
         ),
         NrExecuteRegionRules: unsigned'(4),

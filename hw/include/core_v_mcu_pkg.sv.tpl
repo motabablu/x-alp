@@ -54,6 +54,11 @@ package core_v_mcu_pkg;
                         axi_strb_t, axi_user_t)
     `AXI_TYPEDEF_ALL_CT(axi_llc, axi_llc_req_t, axi_llc_rsp_t, addr_t, axi_llc_id_t, axi_data_t,
                         axi_strb_t, axi_user_t)
+    // 32-bit AXI in front of the 32-bit register bus
+    localparam type axi_reg_data_t = logic [31:0];
+    localparam type axi_reg_strb_t = logic [3:0];
+    `AXI_TYPEDEF_ALL_CT(axi_reg, axi_reg_req_t, axi_reg_rsp_t, addr_t, axi_slv_id_t, axi_reg_data_t,
+                        axi_reg_strb_t, axi_user_t)
 
     `REG_BUS_TYPEDEF_ALL(reg, addr_t, logic [31:0], logic [3:0])
 
@@ -145,6 +150,41 @@ package core_v_mcu_pkg;
 
     // Boot address
     localparam addr_t BOOT_ADDR = BOOTROM_REG_BASE_ADDR;
+
+    //-----------------------
+    // Interrupts (PLIC)
+    //-----------------------
+<%
+    interrupts = xalp.get_interrupts()
+%>\
+    localparam int unsigned PLIC_NINT = 64;
+    // Sources defined by the configuration, the others are external (ext_intr_i)
+    localparam int unsigned PLIC_USED_NINT = ${interrupts.get_num_used_interrupts() if interrupts else 64};
+    localparam int unsigned NEXT_INT = PLIC_NINT - PLIC_USED_NINT;
+    localparam int unsigned NEXT_INT_RND = NEXT_INT == 0 ? 1 : NEXT_INT;
+
+    //-----------------------
+    // Power manager
+    //-----------------------
+<%
+    pm = xalp.get_power_manager()
+    pds = pm.get_power_domains() if pm else []
+    cgs = pm.get_clock_gates() if pm else []
+%>\
+    localparam int unsigned NUM_CORES = ${max(pm.num_cores(), 1) if pm else 1};
+    localparam int unsigned NUM_PD = ${len(pds)};
+    localparam int unsigned NUM_PD_RND = NUM_PD == 0 ? 1 : NUM_PD;
+    localparam int unsigned NUM_CG = ${len(cgs)};
+    localparam int unsigned NUM_CG_RND = NUM_CG == 0 ? 1 : NUM_CG;
+% for i, pd in enumerate(pds):
+    localparam int unsigned PD_${pd.name.upper()}_IDX = ${i};
+% endfor
+    // External power domains (no block inside the chip) leave on the top ports
+    localparam int unsigned NUM_EXT_PD = ${len([pd for pd in pds if not pd.blocks])};
+    localparam int unsigned NUM_EXT_PD_RND = NUM_EXT_PD == 0 ? 1 : NUM_EXT_PD;
+% for i, cg in enumerate(cgs):
+    localparam int unsigned CG_${cg.upper()}_IDX = ${i};
+% endfor
 
     //----------
     // PAD Ring
