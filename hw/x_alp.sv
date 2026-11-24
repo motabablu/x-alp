@@ -31,6 +31,13 @@ module x_alp (
     // Exit interface
     output logic [31:0] exit_value_o,
 
+    // External interrupts (PLIC sources EXT_INTR_*)
+    input logic [core_v_mcu_pkg::NEXT_INT_RND-1:0] ext_intr_i,
+
+    // External power domains: power switches, isolation and retention
+    output power_manager_pkg::power_manager_out_t [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] ext_pwr_ctrl_o,
+    input power_manager_pkg::power_manager_in_t [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] ext_pwr_ack_i,
+
     inout wire clk_i,
     inout wire rst_ni,
     inout wire jtag_tck_i,
@@ -46,28 +53,31 @@ module x_alp (
 );
 
     core_v_mcu u_core_v_mcu (
-        .clk_i        (clk_in_x),
-        .jtag_tck_i   (jtag_tck_in_x),
-        .jtag_tms_i   (jtag_tms_in_x),
-        .jtag_trst_ni (jtag_trst_nin_x),
-        .jtag_tdi_i   (jtag_tdi_in_x),
-        .jtag_tdo_o   (jtag_tdo_out_x),
-        .jtag_tdo_oe_o(jtag_tdo_oe_out_x),
-        .uart_rx_i    (uart_rx_in_x),
-        .uart_tx_o    (uart_tx_out_x),
-        .exit_valid_o (exit_valid_out_x),
-        .rst_ni       (rst_ngen),
-        .boot_select_i(1'b0),
-        .exit_value_o (exit_value_o),
-        .test_mode_i  (test_mode_i),
-        .ext_slv_req_o(ext_slv_req_o),
-        .ext_slv_rsp_i(ext_slv_rsp_i),
-        .ext_mst_req_i(ext_mst_req_i),
-        .ext_mst_rsp_o(ext_mst_rsp_o),
-        .ext_reg_req_o(ext_reg_req_o),
-        .ext_reg_rsp_i(ext_reg_rsp_i),
-        .ext_llc_req_o(ext_llc_req_o),
-        .ext_llc_rsp_i(ext_llc_rsp_i)
+        .clk_i         (clk_in_x),
+        .jtag_tck_i    (jtag_tck_in_x),
+        .jtag_tms_i    (jtag_tms_in_x),
+        .jtag_trst_ni  (jtag_trst_nin_x),
+        .jtag_tdi_i    (jtag_tdi_in_x),
+        .jtag_tdo_o    (jtag_tdo_out_x),
+        .jtag_tdo_oe_o (jtag_tdo_oe_out_x),
+        .uart_rx_i     (uart_rx_in_x),
+        .uart_tx_o     (uart_tx_out_x),
+        .exit_valid_o  (exit_valid_out_x),
+        .rst_ni        (rst_ngen),
+        .boot_select_i (1'b0),
+        .exit_value_o  (exit_value_o),
+        .test_mode_i   (test_mode_i),
+        .ext_slv_req_o (ext_slv_req_o),
+        .ext_slv_rsp_i (ext_slv_rsp_i),
+        .ext_mst_req_i (ext_mst_req_i),
+        .ext_mst_rsp_o (ext_mst_rsp_o),
+        .ext_reg_req_o (ext_reg_req_o),
+        .ext_reg_rsp_i (ext_reg_rsp_i),
+        .ext_llc_req_o (ext_llc_req_o),
+        .ext_llc_rsp_i (ext_llc_rsp_i),
+        .ext_intr_i    (ext_intr_i),
+        .ext_pwr_ctrl_o(ext_pwr_ctrl_o),
+        .ext_pwr_ack_i (ext_pwr_ack_i)
     );
 
 

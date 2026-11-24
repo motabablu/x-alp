@@ -36,6 +36,13 @@ module x_alp (
     // Exit interface
     output logic [31:0] exit_value_o,
 
+    // External interrupts (PLIC sources EXT_INTR_*)
+    input logic [core_v_mcu_pkg::NEXT_INT_RND-1:0] ext_intr_i,
+
+    // External power domains: power switches, isolation and retention
+    output power_manager_pkg::power_manager_out_t [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] ext_pwr_ctrl_o,
+    input  power_manager_pkg::power_manager_in_t  [core_v_mcu_pkg::NUM_EXT_PD_RND-1:0] ext_pwr_ack_i,
+
     % for pad in xheep.get_padring().pad_list:
       <%
       has_input_pin = any(isinstance(pin, Input) for pin in pad.pins)
@@ -83,7 +90,10 @@ module x_alp (
         .ext_reg_req_o(ext_reg_req_o),
         .ext_reg_rsp_i(ext_reg_rsp_i),
         .ext_llc_req_o(ext_llc_req_o),
-        .ext_llc_rsp_i(ext_llc_rsp_i)
+        .ext_llc_rsp_i(ext_llc_rsp_i),
+        .ext_intr_i   (ext_intr_i),
+        .ext_pwr_ctrl_o(ext_pwr_ctrl_o),
+        .ext_pwr_ack_i (ext_pwr_ack_i)
     );
 
 <%
