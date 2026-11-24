@@ -18,20 +18,20 @@ module axi_idle_monitor #(
     output logic idle_o
 );
 
-  logic [CntWidth-1:0] wr_q, rd_q;
+    logic [CntWidth-1:0] wr_q, rd_q;
 
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      wr_q <= '0;
-      rd_q <= '0;
-    end else begin
-      wr_q <= wr_q + CntWidth'(req_i.aw_valid && rsp_i.aw_ready)
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+            wr_q <= '0;
+            rd_q <= '0;
+        end else begin
+            wr_q <= wr_q + CntWidth'(req_i.aw_valid && rsp_i.aw_ready)
                    - CntWidth'(rsp_i.b_valid && req_i.b_ready);
-      rd_q <= rd_q + CntWidth'(req_i.ar_valid && rsp_i.ar_ready)
+            rd_q <= rd_q + CntWidth'(req_i.ar_valid && rsp_i.ar_ready)
                    - CntWidth'(rsp_i.r_valid && req_i.r_ready && rsp_i.r.last);
+        end
     end
-  end
 
-  assign idle_o = wr_q == '0 && rd_q == '0 && !req_i.aw_valid && !req_i.ar_valid && !req_i.w_valid;
+    assign idle_o = wr_q == '0 && rd_q == '0 && !req_i.aw_valid && !req_i.ar_valid && !req_i.w_valid;
 
 endmodule
