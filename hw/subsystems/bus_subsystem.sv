@@ -31,13 +31,13 @@ module bus_subsystem (
     // ----------------
     core_v_mcu_pkg::axi_slv_req_t [core_v_mcu_pkg::totalAxiSlaves-1:0] axi_slave_req;
     core_v_mcu_pkg::axi_slv_rsp_t [core_v_mcu_pkg::totalAxiSlaves-1:0] axi_slave_rsp;
-    // AMO <--> DW converter
-    core_v_mcu_pkg::axi_slv_req_t                                      axi_reg_amo_req;
-    core_v_mcu_pkg::axi_slv_rsp_t                                      axi_reg_amo_rsp;
     // DW converter <--> AXI to REG
     core_v_mcu_pkg::axi_reg_req_t                                      axi_reg_req;
     core_v_mcu_pkg::axi_reg_rsp_t                                      axi_reg_rsp;
-    core_v_mcu_pkg::reg_req_t                                          reg_in_req;
+    // AXI cut <--> AXI to REG
+    core_v_mcu_pkg::axi_reg_req_t                                      axi_reg_cut_req;
+    core_v_mcu_pkg::axi_reg_rsp_t                                      axi_reg_cut_rsp;
+    core_v_mcu_pkg::reg_req_t                                         reg_in_req;
     core_v_mcu_pkg::reg_rsp_t                                          reg_in_rsp;
     // Reg demux
     logic                         [                regSelectWidth-1:0] reg_select;
@@ -79,31 +79,6 @@ module bus_subsystem (
     // Reg Peripheral Bus
     //-------------------
 
-    // Atomics
-    //--------
-    axi_riscv_atomics_structs #(
-        .AxiAddrWidth   (core_v_mcu_pkg::AxiAddrWidth),
-        .AxiDataWidth   (core_v_mcu_pkg::AxiDataWidth),
-        .AxiIdWidth     (core_v_mcu_pkg::AxiSlvIdWidth),
-        .AxiUserWidth   (core_v_mcu_pkg::AxiUserWidth),
-        .AxiMaxReadTxns (1),
-        .AxiMaxWriteTxns(1),
-        .AxiUserAsId    (0),
-        .AxiUserIdMsb   (0),
-        .AxiUserIdLsb   (0),
-        .RiscvWordWidth (64),
-        .NAxiCuts       (1),
-        .axi_req_t      (core_v_mcu_pkg::axi_slv_req_t),
-        .axi_rsp_t      (core_v_mcu_pkg::axi_slv_rsp_t)
-    ) i_reg_atomics (
-        .clk_i,
-        .rst_ni,
-        .axi_slv_req_i(axi_slave_req[core_v_mcu_pkg::PERIPHERAL_DOMAIN_S_BUS_IDX]),
-        .axi_slv_rsp_o(axi_slave_rsp[core_v_mcu_pkg::PERIPHERAL_DOMAIN_S_BUS_IDX]),
-        .axi_mst_req_o(axi_reg_amo_req),
-        .axi_mst_rsp_i(axi_reg_amo_rsp)
-    );
-
     axi_dw_converter #(
         .AxiMaxReads        (1),
         .AxiSlvPortDataWidth(core_v_mcu_pkg::AxiDataWidth),
@@ -124,10 +99,27 @@ module bus_subsystem (
     ) u_axi_dw_converter (
         .clk_i     (clk_i),
         .rst_ni    (rst_ni),
-        .slv_req_i (axi_reg_amo_req),
-        .slv_resp_o(axi_reg_amo_rsp),
+        .slv_req_i (axi_slave_req[core_v_mcu_pkg::PERIPHERAL_DOMAIN_S_BUS_IDX]),
+        .slv_resp_o(axi_slave_rsp[core_v_mcu_pkg::PERIPHERAL_DOMAIN_S_BUS_IDX]),
         .mst_req_o (axi_reg_req),
         .mst_resp_i(axi_reg_rsp)
+    );
+
+    axi_cut #(
+        .aw_chan_t (core_v_mcu_pkg::axi_reg_aw_chan_t),
+        .w_chan_t  (core_v_mcu_pkg::axi_reg_w_chan_t),
+        .b_chan_t  (core_v_mcu_pkg::axi_reg_b_chan_t),
+        .ar_chan_t (core_v_mcu_pkg::axi_reg_ar_chan_t),
+        .r_chan_t  (core_v_mcu_pkg::axi_reg_r_chan_t),
+        .axi_req_t (core_v_mcu_pkg::axi_reg_req_t),
+        .axi_resp_t(core_v_mcu_pkg::axi_reg_rsp_t)
+    ) u_axi_reg_cut (
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .slv_req_i (axi_reg_req),
+        .slv_resp_o(axi_reg_rsp),
+        .mst_req_o (axi_reg_cut_req),
+        .mst_resp_i(axi_reg_cut_rsp)
     );
 
     // Convert from AXI to reg protocol
@@ -145,8 +137,8 @@ module bus_subsystem (
     ) u_axi_to_reg_v2 (
         .clk_i    (clk_i),
         .rst_ni   (rst_ni),
-        .axi_req_i(axi_reg_req),
-        .axi_rsp_o(axi_reg_rsp),
+        .axi_req_i(axi_reg_cut_req),
+        .axi_rsp_o(axi_reg_cut_rsp),
         .reg_req_o(reg_in_req),
         .reg_rsp_i(reg_in_rsp),
         .reg_id_o (),
