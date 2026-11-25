@@ -8,13 +8,18 @@
 target extended-remote :3333
 monitor reset halt
 
-# AXI_LLC_BASE_ADDRESS = 0x20050000
-while (*(unsigned int *)0x20050048 & 1) == 0
+# Base from the linker symbol, offsets from axi_llc_regs.h.
+set $llc = (unsigned long)&__base_axi_llc
+# BIST_STATUS
+while (*(unsigned int *)($llc + 0x48) & 1) == 0
 end
-set $ways = *(unsigned int *)0x20050028
-set *(unsigned int *)0x20050000 = (1 << $ways) - 1
-set *(unsigned int *)0x20050004 = 0
-set *(unsigned int *)0x20050010 = 1
-while *(unsigned int *)0x20050018 != *(unsigned int *)0x20050000
+# SET_ASSO_LOW
+set $ways = *(unsigned int *)($llc + 0x28)
+# CFG_SPM_LOW, CFG_SPM_HIGH, COMMIT_CFG
+set *(unsigned int *)($llc + 0x00) = (1 << $ways) - 1
+set *(unsigned int *)($llc + 0x04) = 0
+set *(unsigned int *)($llc + 0x10) = 1
+# FLUSHED_LOW == CFG_SPM_LOW
+while *(unsigned int *)($llc + 0x18) != *(unsigned int *)($llc + 0x00)
 end
-printf "LLC SPM locked: CFG_SPM_LOW=0x%08x\n", *(unsigned int *)0x20050000
+printf "LLC SPM locked @0x%08lx: CFG_SPM_LOW=0x%08x\n", $llc, *(unsigned int *)($llc + 0x00)
