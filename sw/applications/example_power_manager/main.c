@@ -47,11 +47,16 @@ static bool check(bool ok, const char *what) {
   return ok;
 }
 
-// Clock-gated sleep: the cycle counter of the core stops with its clock
+// Clock-gated sleep: the cycle counter of the core stops with its clock.
+// On FPGA the clock gate is a bypass: check the wake-up timer woke the core.
 static bool clock_gated_nap(void) {
   uint64_t start = cpu_cycles();
   cpu_sleep_cycles(kPmModeClockGate, SLEEP_CYCLES);
+#if TARGET_SIM
   return cpu_cycles() - start < SLEEP_CYCLES;
+#else
+  return cpu_cycles() - start >= SLEEP_CYCLES;
+#endif
 }
 
 // Write back and invalidate every cache way. At the end the LLC clears

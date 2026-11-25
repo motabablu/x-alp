@@ -23,7 +23,6 @@ _start:
     j 1b
 2:
     // Init stack and global pointer iff linked as nonzero
-    mv t1, sp
     la t0, __stack_pointer$
     beqz t0, 1f
     mv sp, t0
@@ -33,12 +32,6 @@ _start:
     beqz t0, 1f
     mv gp, t0
 1:  .option pop
-
-    // Store existing stack, global, return pointers on new stack
-    addi sp, sp, -24
-    sd t1, 0(sp)
-    sd gp, 8(sp)
-    sd ra, 16(sp)
 
     // Set the trap vector table (vectored mode, see vectors.S)
     la t0, __vector_start
@@ -121,19 +114,16 @@ _fp_init:
     call main
 
 // If main returns, we end up here. This is a local label (not the libc _exit,
-// which lives in syscalls.c) used solely to hand control back to the boot context.
+// which lives in syscalls.c).
 .align 4
 _crt_return:
-    // Restore the original context registers (sp last)
-    ld ra, 16(sp)
-    ld gp, 8(sp)
-    ld sp, 0(sp)
-    // Publish the return value and raise the exit flag (value first): the
-    // caller may be the boot ROM, or nobody at all under JTAG.
+    // Publish the return value and raise the exit flag (value first)
     la t1, __base_soc_ctrl
     sw a0, 4(t1)     // SOC_CTRL.EXIT_VALUE
     li t0, 1
     sw t0, 0(t1)     // SOC_CTRL.EXIT_VALID
-    // Hand over to whatever called us, passing return
-    ret
+    // Park, as the boot ROM's _exit does. No return: under JTAG nobody called
+    // _start, and a power manager switch off resets the core, so ra is garbage.
+1:  wfi
+    j 1b
 
