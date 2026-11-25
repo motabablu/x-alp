@@ -37,7 +37,7 @@ module bus_subsystem (
     // AXI cut <--> AXI to REG
     core_v_mcu_pkg::axi_reg_req_t                                      axi_reg_cut_req;
     core_v_mcu_pkg::axi_reg_rsp_t                                      axi_reg_cut_rsp;
-    core_v_mcu_pkg::reg_req_t                                         reg_in_req;
+    core_v_mcu_pkg::reg_req_t                                          reg_in_req;
     core_v_mcu_pkg::reg_rsp_t                                          reg_in_rsp;
     // Reg demux
     logic                         [                regSelectWidth-1:0] reg_select;
